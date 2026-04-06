@@ -2,7 +2,7 @@
 # Created: Sat, Dec 06, 2025, at 01:14:28 PM
 #
 # @Purpose:
-# 	Install the core libraries directly from the web.
+# 	Install the core apps3 libraries directly from the web.
 
 set -e
 
@@ -34,5 +34,5 @@ sudo dseditgroup -o edit -a "$(whoami)" -t user wheel \
   && sudo chmod g+w "/Library/Script Libraries/core/test" \
   && sudo chmod g+w "/Library/Script Libraries/core/app"
 
-cd "$REPO_DIR"
+cd "$PROJECT_DIR"
 make set-computer-deploy-type install
