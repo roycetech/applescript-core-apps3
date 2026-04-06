@@ -35,4 +35,6 @@ sudo dseditgroup -o edit -a "$(whoami)" -t user wheel \
   && sudo chmod g+w "/Library/Script Libraries/core/app"
 
 cd "$PROJECT_DIR"
+echo "D: pwd ${pwd}"
+
 make set-computer-deploy-type install
