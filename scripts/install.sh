@@ -18,7 +18,7 @@ REPO_URL="https://github.com/roycetech/applescript-core-apps3"
 
 if [ ! -d "$REPO_DIR" ]; then
     echo "Cloning lightweight repository..."
-    git clone --depth=1 "$REPO_URL" "$REPO_DIR"
+    git clone --depth=1 "$REPO_URL" "$PROJECT_DIR"
 else
     echo "Updating lightweight repository..."
     git -C "$REPO_DIR" pull --depth=1 --rebase
