@@ -39,19 +39,8 @@ endif
 clean:
 	find . -name '*.scpt' ! -name "main.scpt" -delete
 
-install: _init build
-ifeq ($(DEPLOY_TYPE), user)
-	mkdir -p ~/Library/'Script Libraries'/core/test
-	mkdir -p ~/Library/'Script Libraries'/core/app
-else
-	$(SUDO) mkdir -p /Library/'Script Libraries'/core/test
-	$(SUDO) mkdir -p /Library/'Script Libraries'/core/app
-endif
-	touch ~/applescript-core/logs/applescript-core.log
-#	osascript scripts/setup-applescript-core-project-path.applescript
-# 	./scripts/setup-switches.sh
-	@echo "applescript-core installation completed\n"
-
+install:
+	@echo "Install apps individually. e.g. make install-cursor"
 
 build-extras: \
 	build-redis \
