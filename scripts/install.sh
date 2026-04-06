@@ -13,8 +13,8 @@ if [ ! -d "$PROJECT_CORE_DIR" ]; then
     exit 1
 fi
 
-REPO_DIR="$HOME/Projects/@roycetech/applescript-core"
-REPO_URL="https://github.com/roycetech/applescript-core"
+PROJECT_DIR="$HOME/Projects/@roycetech/applescript-core-apps3"
+REPO_URL="https://github.com/roycetech/applescript-core-apps3"
 
 if [ ! -d "$REPO_DIR" ]; then
     echo "Cloning lightweight repository..."
