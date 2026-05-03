@@ -3,8 +3,7 @@
 # Contains target for 3rd party apps and libraries.
 
 OMZ_EXISTS := $(wildcard ~/.oh-my-zsh/plugins)
-$(info     OMZ_EXISTS: $(OMZ_EXISTS))
-$(info )
+$(info I: OMZ_EXISTS: $(OMZ_EXISTS))
 
 build-omz:
 ifeq ($(OMZ_EXISTS),)
@@ -17,6 +16,11 @@ else
 	@echo "Build OMZ completed\n"
 endif
 
+APP_WRAPPERS := App Wrappers
+
+VERSION_MICROSOFT_EDGE_MAJOR_MINOR = $(shell osascript -e "tell application \"Microsoft Edge\" to version" | awk -F. '{print $$1 "." $$2}')
+$(info     VERSION_MICROSOFT_EDGE_MAJOR_MINOR: $(VERSION_MICROSOFT_EDGE_MAJOR_MINOR))
+$(info )
 
 install-omz: build-omz
 	./scripts/factory-insert.sh TerminalTabInstance core/dec-terminal-prompt-omz
@@ -75,8 +79,17 @@ build-guitar-pro:
 	$(call _build-app-scripts-if-exists,Guitar Pro,App Wrappers/Guitar Pro/7.6)
 
 
+
+# VERSION_MICROSOFT_EDGE_MAJOR_MINOR := "120.0" # DEBUGGING only
+
 build-microsoft-edge:
-	$(call _build-app-scripts-if-exists,Microsoft Edge,App Wrappers/Microsoft Edge/140.0)
+	@echo "Building Microsoft Edge $(VERSION_MICROSOFT_EDGE_MAJOR_MINOR) scripts"
+	# Older versions of scripts are built first and overwritten by newer versions.
+	$(call _build-versioned-directory,Microsoft Edge,$(APP_WRAPPERS)/Microsoft Edge,"$(VERSION_MICROSOFT_EDGE_MAJOR_MINOR)")
+	@if echo "$(VERSION_MICROSOFT_EDGE_MAJOR_MINOR) 147.0" | awk '{exit !($$1 >= $$2)}'; then \
+		osascript "$(APP_WRAPPERS)/Microsoft Edge/147.0/allow-javascript-from-apple-events.applescript"; \
+	fi
+	@echo "Build Microsoft Edge completed\n"
 
 
 build-iterm:
