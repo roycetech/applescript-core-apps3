@@ -3,7 +3,7 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh App Wrappers/Sourcetree/4.2.11/sourcetree
+		./scripts/build-lib.sh 'App Wrappers/Sourcetree/4.2.11/sourcetree'
 
 	@Change Logs:
 		Fri, Mar 27, 2026, at 02:33:04 PM - Added #getCurrentRepositoryName

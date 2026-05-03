@@ -18,6 +18,7 @@
 		Tue, Sep 09, 2025 at 08:23:54 AM
 
 	@Change Logs: 
+		Tue, Apr 28, 2026, at 11:48:20 AM - Fix missing active tab reference in #runScriptDirect
  *)
 
 use scripting additions
@@ -151,7 +152,9 @@ on decorate(microsoftEdgeTab)
 		
 		on runScriptDirect(scriptText)
 			tell application "Microsoft Edge" to tell front window
-				execute javascript scriptText
+				tell active tab
+					execute javascript scriptText
+				end tell
 			end tell
 		end runScriptDirect
 	end script
