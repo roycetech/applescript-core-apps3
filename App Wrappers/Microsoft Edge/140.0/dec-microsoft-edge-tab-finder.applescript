@@ -465,7 +465,7 @@ end newTabByProfileFinder
 on decorate(mainScript)
 	loggerFactory's inject(me)
 	
-	script microsoftEdgeTabFinderDecorator
+	script MicrosoftEdgeTabFinderDecorator
 		property parent : mainScript
 		
 		on getFirstWindowTabCount()
@@ -576,7 +576,7 @@ on decorate(mainScript)
 			tell application "Microsoft Edge" to set microsoftEdgeWindows to windows
 			repeat with nextWindow in microsoftEdgeWindows
 				tell application "Microsoft Edge"
-					-- set currentWindowTab to current tab of nextWindow
+					set currentWindowTab to active tab of nextWindow
 				end tell
 				try
 					if direction is DEFAULT and scriptObj's accept(currentWindowTab) then
