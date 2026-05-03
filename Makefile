@@ -31,12 +31,11 @@ list-targets:
 help:
 	@echo "make install - Create config files, assets, and install essential libraries."
 
-$(info     AppleScript Core Build Script)
-$(info     OS_NAME: $(OS_NAME))
-$(info     OS Version: $(OS_VERSION))
+$(info I: AppleScript Core Build Script)
+$(info I: OS_NAME: $(OS_NAME))
+$(info I: OS Version: $(OS_VERSION))
 # $(info     OS Major Version: $(OS_VERSION_MAJOR))
-$(info     DEPLOY_TYPE: $(DEPLOY_TYPE))
-$(info )
+$(info I: DEPLOY_TYPE: $(DEPLOY_TYPE))
 
 ifeq ($(DEPLOY_TYPE),computer)
 	# Commands to execute if VARIABLE is equal to "value"
