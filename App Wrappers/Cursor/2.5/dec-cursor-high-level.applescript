@@ -24,7 +24,7 @@ property kb : missing value
 property COMMAND_PALETTE_OPEN_CHAT_IN_AGENT_MODE : "Open Chat in Agent Mode"
 property COMMAND_PALETTE_OPEN_CHAT_IN_ASK_MODE : "Open Chat in Ask Mode"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

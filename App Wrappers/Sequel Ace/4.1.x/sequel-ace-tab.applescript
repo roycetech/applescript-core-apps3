@@ -41,7 +41,7 @@ property kb : missing value
 
 property TEST_CONNECTION_NAME : "MySQL5 Docker"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's injectBasic(me)

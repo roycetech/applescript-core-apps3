@@ -55,7 +55,7 @@ property configSystem : missing value
 
 property ST_CLI : quoted form of (do shell script "plutil -extract \"Sublime Text CLI\" raw ~/applescript-core/config-system.plist")
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

@@ -38,7 +38,7 @@ property CONFIG_USER : "user"
 property CONFIG_KEY_TEST_CONNECTION : "Test MySQL Connection"
 
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's injectBasic(me)

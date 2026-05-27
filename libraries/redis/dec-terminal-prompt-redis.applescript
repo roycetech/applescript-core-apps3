@@ -26,7 +26,7 @@ property logger : missing value
 
 property terminal : missing value
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then
 	spotCheck()
 end if
 

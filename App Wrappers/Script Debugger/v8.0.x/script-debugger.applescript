@@ -39,7 +39,7 @@ property configSystem : missing value
 
 property DOC_EDITED_SUFFIX : " Ð Edited"
 
-if {"Script Debugger", "Script Editor"} contains (the name of current application as text) then spotCheck()
+if {"Script Debugger", "Script Editor", "osascript"} contains (the name of current application as text) then spotCheck()
 
 on spotCheck()
 	loggerFactory's injectBasic(me)

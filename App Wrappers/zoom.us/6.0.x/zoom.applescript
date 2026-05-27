@@ -82,7 +82,7 @@ property logger : missing value
 property systemSetting : missing value
 property cliclick : missing value
 
-if the name of current application is "Script Editor" then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

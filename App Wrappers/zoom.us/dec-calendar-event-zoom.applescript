@@ -36,7 +36,7 @@ property uiutil : missing value
 property calendar : missing value
 property calendarEvent : missing value
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)
@@ -115,7 +115,7 @@ on decorate(mainScript)
 		property parent : mainScript
 
 		on _checkFacilitator(meetingBodyTextField)
-			set isSpot to name of current application is "Script Editor"
+			set isSpot to {"Script Editor", "Script Debugger", "osascript"} contains the name of current application
 			if isSpot is true then
 				try
 					set meetingBodyText to |description| of meetingBodyTextField
@@ -137,7 +137,7 @@ on decorate(mainScript)
 
 
 		on extractMeetingId(meetingStaticText)
-			set isSpot to name of current application is "Script Editor"
+			set isSpot to {"Script Editor", "Script Debugger", "osascript"} contains the name of current application
 			if isSpot is true then
 				try
 					set meetingDescription to |description| of meetingStaticText
@@ -156,7 +156,7 @@ on decorate(mainScript)
 		end extractMeetingId
 
 		on extractMeetingPassword(meetingStaticText)
-			set isSpot to name of current application is "Script Editor"
+			set isSpot to {"Script Editor", "Script Debugger", "osascript"} contains the name of current application
 			if isSpot is true then
 				try
 					set meetingDescription to |description| of meetingStaticText

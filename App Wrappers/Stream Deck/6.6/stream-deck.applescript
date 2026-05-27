@@ -43,7 +43,7 @@ property isSpot : false
 
 property DEVICE_XL : "Stream Deck XL"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then
 	set isSpot to true
 	spotCheck()
 end if
@@ -235,6 +235,7 @@ on new()
 					return window "Preferences"
 				end try
 			end tell
+			
 			missing value
 		end getSettingsWindow
 		

@@ -42,7 +42,7 @@ property retry : missing value
 property CONFIG_SYSTEM : "system"
 property CONFIG_KEY_IDEA_CLI : "IntelliJ CLI"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

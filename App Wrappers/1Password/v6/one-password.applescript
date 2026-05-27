@@ -28,7 +28,7 @@ property waitOtpThreshold : 3 -- 2 is too short, failed January 6, 2021
 
 property APP_NAME : "1Password 6"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

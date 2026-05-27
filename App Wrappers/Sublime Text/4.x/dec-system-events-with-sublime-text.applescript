@@ -15,7 +15,7 @@ use syseveLib : script "core/system-events"
 
 property logger : missing value
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's injectBasic(me)

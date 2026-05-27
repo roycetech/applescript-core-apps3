@@ -26,7 +26,7 @@ property CONFIG_KEY_BUSINESS : "business"
 property PLIST_KEY_DOMAIN_KEY : "Domain Key"
 property PLIST_KEY_VPN_KEY : "VPN Key"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

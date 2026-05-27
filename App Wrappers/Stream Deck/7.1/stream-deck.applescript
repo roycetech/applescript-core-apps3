@@ -56,7 +56,7 @@ property ATTR_ID_TEXT_EDIT : "ESDStreamDeckApplication.MainWindow.centralWidget.
 property EDITOR_MINIMUM_WIDTH : 840
 property EDITOR_MINIMUM_HEIGHT : 768
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then
 	set isSpot to true
 	spotCheck()
 end if

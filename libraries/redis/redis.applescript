@@ -58,7 +58,7 @@ property ERROR_KEY_IS_MISSING : 1002
 property ERROR_VALUE_IS_MISSING : 1003
 property ERROR_INVALID_ELEMENT_COUNT : 1004
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then
 	spotCheck()
 end if
 

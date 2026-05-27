@@ -11,7 +11,7 @@ use loggerFactory : script "core/logger-factory"
 
 property logger : null
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	logger's start()

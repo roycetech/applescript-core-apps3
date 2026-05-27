@@ -34,7 +34,7 @@ property logger : missing value
 
 property retry : missing value
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 if name of current application is "osascript" then unitTest()
 
 on spotCheck()

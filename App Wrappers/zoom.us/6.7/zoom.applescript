@@ -70,7 +70,7 @@ property CONFIG_KEY_DOMAIN_KEY : "Domain Key"
 property CONFIG_KEY_USER_MEETING_ID : "User Meeting ID"
 property CONFIG_KEY_USERNAME : "Username"
 
-if the name of current application is "Script Editor" then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)

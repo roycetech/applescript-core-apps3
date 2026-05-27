@@ -34,7 +34,7 @@ property SHARING_WIN_NAME : "zoom share toolbar window"
 property SELECT_SHARE_WIN_NAME : "Select a window or an application that you want to share"
 property SHARING_STATUSBAR_WIN_NAME : "zoom share statusbar window"
 
-if {"Script Editor", "Script Debugger"} contains the name of current application then spotCheck()
+if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
 	loggerFactory's inject(me)
