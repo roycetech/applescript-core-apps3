@@ -9,6 +9,7 @@
 	@Last Modified: 2025-10-13 07:30:25
 	
 	@Change Logs:
+		Fri, May 29, 2026, at 03:31:57 PM - Fix main window derivation by inspecting for known UI element.
 		Sat, May 16, 2026, at 05:31:49 PM - Fix main window derivation when zoom percent is present in the window title.
 *)
 use regexPatternLib : script "core/regex-pattern"
@@ -120,7 +121,8 @@ on new(pAppWindow)
 			tell application "System Events" to tell process "Marked 2"
 				try
 					-- return first window whose title ends with ".md"  -- Doesn't capture window where zoom is indicated ".md (80%)"
-					return first window whose title contains ".md"
+					-- return first window whose title contains ".md"
+					return first window whose help of checkbox 4 is "Keep Window on Top"
 				end try
 			end tell
 			
