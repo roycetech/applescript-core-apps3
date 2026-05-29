@@ -27,6 +27,7 @@ on spotCheck()
 		Main
 		Manual: Trigger Bottom Menu
 		Manual: Trigger Backup All
+		Manual Dynamic: Select Profile p=Web:+uDemy (NOT POSSIBLE ATM) Use console to trigger via kb and cliclick.
 	")
 	
 	set spotScript to script "core/spot-test"
@@ -43,7 +44,16 @@ on spotCheck()
 	set sut to sutLib's new()
 	set sut to decorate(sut)
 	
-	if caseIndex is 1 then
+	if caseDesc starts with "Manual Dynamic: Select Profile p=" then
+		set cdppLib to script "com.roycetech/app-hub/case-description-parameter-parser"
+		set cdpp to cdppLib's new(caseDesc)
+
+		set profile to cdpp's p("p")
+		logger's debugf("profile: {}", profile)
+
+		-- sut's selectProfileByName(caseProfile)
+		
+	else if caseIndex is 1 then
 		
 	else if caseIndex is 2 then
 		sut's triggerBottomMenu()

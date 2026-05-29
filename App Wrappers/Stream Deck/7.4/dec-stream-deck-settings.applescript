@@ -6,7 +6,7 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.1/dec-stream-deck-settings'
+		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.4/dec-stream-deck-settings'
 
 	@Created: Wed, Oct 01, 2025 at 01:04:40 PM
 	@Last Modified: Wed, Oct 01, 2025 at 01:04:40 PM
@@ -53,9 +53,9 @@ on spotCheck()
 	
 	logger's infof("Settings window present: {}", sut's isSettingsWindowPresent())
 	logger's infof("Settings current tab title: {}", sut's getSettingsCurrentTabTitle())
-
-	if caseIndex is 1 then  
-		  
+	
+	if caseIndex is 1 then
+		
 	else if caseIndex is 2 then
 		sut's showSettingsWindow()
 		
@@ -65,6 +65,7 @@ on spotCheck()
 	else if caseIndex is 4 then
 		set sutTabTitle to "Unicorn"
 		set sutTabTitle to "Plugins"
+		set sutTabTitle to "Profiles"
 		-- set sutTabTitle to "General"
 		
 		logger's infof("sutTabTitle: {}", sutTabTitle)
@@ -147,27 +148,34 @@ on decorate(mainScript)
 		on getSettingsCurrentTabTitle()
 			set settingsWindow to getSettingsWindow()
 			if settingsWindow is missing value then return missing value
-
-			tell application "System Events" to tell process "Safari"
+			
+			tell application "System Events" to tell process "Stream Deck"
 				try
 					return name of tab group 1 of settingsWindow
 				end try
 			end tell
-
-			missing value
-		end getSettingsTabTitle
-
-
-		on switchSettingsTab(tabTitle)
-			set settingsWindow to getSettingsWindow()
-			if settingsWindow is missing value then return
 			
-			tell application "System Events" to tell process "Safari"
+			missing value
+		end getSettingsCurrentTabTitle
+		
+		
+		on switchSettingsTab(tabTitle)
+			set settingsWindow to getSettingsWindow() 
+			if settingsWindow is missing value then
+				logger's debug("Settings window was not found")
+				return
+			end if
+			
+			tell application "System Events" to tell process "Stream Deck"
+				set frontmost to true
 				try
-					-- click radio button tabTitle of group 2 of settingsWindow
 					click radio button tabTitle of tab group 1 of settingsWindow
+				on error the errorMessage number the errorNumber
+					log errorMessage
+					
 				end try
 			end tell
 		end switchSettingsTab
 	end script
 end decorate
+
