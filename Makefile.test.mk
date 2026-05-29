@@ -68,7 +68,10 @@ test-integration:
 	osascript "test/apps/1st-party/Test dec-script-editor-content.applescript"
 	open -a "Keyboard Maestro Engine"
 
-watch: watch-unit
+watch:
+	scripts/run-osascript_on-change.sh
+
+watch-test: watch-unit
 
 watch-unit: test-unit
 	scripts/run-tests_on-change.sh  # This runs test-unit target on change.
