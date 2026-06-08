@@ -18,8 +18,15 @@ endif
 
 APP_WRAPPERS := App Wrappers
 
-VERSION_MICROSOFT_EDGE_MAJOR_MINOR = $(shell osascript -e "tell application \"Microsoft Edge\" to version" | awk -F. '{print $$1 "." $$2}')
+MICROSOFT_EDGE_INSTALLED := $(shell [ -d "/Applications/Microsoft Edge.app" ] && echo yes)
+
+ifeq ($(MICROSOFT_EDGE_INSTALLED),yes)
+VERSION_MICROSOFT_EDGE_MAJOR_MINOR := $(shell osascript -e 'tell application "Microsoft Edge" to version' | awk -F. '{print $$1 "." $$2}')
 $(info     VERSION_MICROSOFT_EDGE_MAJOR_MINOR: $(VERSION_MICROSOFT_EDGE_MAJOR_MINOR))
+else
+VERSION_MICROSOFT_EDGE_MAJOR_MINOR :=
+$(info     Microsoft Edge not installed; skipping version detection)
+endif
 $(info )
 
 install-omz: build-omz
@@ -83,6 +90,9 @@ build-guitar-pro:
 # VERSION_MICROSOFT_EDGE_MAJOR_MINOR := "120.0" # DEBUGGING only
 
 build-microsoft-edge:
+ifneq ($(MICROSOFT_EDGE_INSTALLED),yes)
+	@echo "Microsoft Edge not found, skipping build"
+else
 	@echo "Building Microsoft Edge $(VERSION_MICROSOFT_EDGE_MAJOR_MINOR) scripts"
 	# Older versions of scripts are built first and overwritten by newer versions.
 	$(call _build-versioned-directory,Microsoft Edge,$(APP_WRAPPERS)/Microsoft Edge,"$(VERSION_MICROSOFT_EDGE_MAJOR_MINOR)")
@@ -90,6 +100,7 @@ build-microsoft-edge:
 		osascript "$(APP_WRAPPERS)/Microsoft Edge/147.0/allow-javascript-from-apple-events.applescript"; \
 	fi
 	@echo "Build Microsoft Edge completed\n"
+endif
 
 
 build-iterm:
@@ -166,7 +177,7 @@ install-stream-deck: build-stream-deck
 	@echo "Install Stream Deck completed"
 
 
-install-sublime-text: build-finder
+install-sublime-text:
 	osascript ./scripts/setup-sublime-text-cli.applescript
 	./scripts/factory-insert.sh SystemEventsInstance core/dec-system-events-with-sublime-text
 	$(call _build-script,App Wrappers/Sublime Text/4.x/dec-sublime-text-tabs)
