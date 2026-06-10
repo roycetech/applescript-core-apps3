@@ -18,7 +18,7 @@ _build-versioned-directory = \
 		awkver=$$(awk 'BEGIN {if ("'$$dirver'" <= "'$(3)'") print 1; else print 0}'); \
 		if [ "$$awkver" -eq 1 ]; then \
 			echo "  Compiling AppleScripts in \"$$d\"..."; \
-			find "$$d" -maxdepth 1 -type f -name '*.applescript' -print0 | \
+			find "$$d" -maxdepth 1 -type f -name '*.applescript' -print0 | sort -z | \
 			while IFS= read -r -d '' file; do \
 				no_ext=$${file%.applescript}; \
 				echo "    Building \"$$no_ext\""; \
@@ -35,7 +35,7 @@ _build-versioned-directory = \
 # @2 - folder to build the scripts from
 _build-app-scripts = \
 	@echo "Building $(1) scripts..."; \
-	find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 \
+	find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 | sort -z \
 	| while IFS= read -r -d '' file; do \
 		echo "Building $$file"; \
 		no_ext=$${file%.applescript}; \

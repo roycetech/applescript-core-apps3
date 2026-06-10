@@ -227,7 +227,7 @@ install-zoom: build-zoom
 _build-app-scripts-if-exists = \
 	@if [ -d "/Applications/$(1).app" ]; then \
 		echo "Building $(1) scripts..."; \
-		find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 \
+		find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 | sort -z \
 		| while IFS= read -r -d '' file; do \
 			echo "Building $$file"; \
 			no_ext=$${file%.applescript}; \
@@ -246,7 +246,7 @@ _build-app-scripts-if-exists-and-unlaunch = \
 		echo "Building $(1) scripts..."; \
 		is_running=$$(osascript -e 'tell application "System Events" to return (exists (processes where name is "$(1)"))' 2>/dev/null); \
 		echo "is_running: $$is_running"; \
-		find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 \
+		find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 | sort -z \
 		| while IFS= read -r -d '' file; do \
 			echo "Building $$file"; \
 			no_ext=$${file%.applescript}; \
