@@ -29,6 +29,17 @@ $(info     Microsoft Edge not installed; skipping version detection)
 endif
 $(info )
 
+GOOGLE_CHROME_INSTALLED := $(shell [ -d "/Applications/Google Chrome.app" ] && echo yes)
+
+ifeq ($(GOOGLE_CHROME_INSTALLED),yes)
+VERSION_GOOGLE_CHROME_MAJOR_MINOR := $(shell osascript -e 'tell application "Google Chrome" to version' | awk -F. '{print $$1 "." $$2}')
+$(info     VERSION_GOOGLE_CHROME_MAJOR_MINOR: $(VERSION_GOOGLE_CHROME_MAJOR_MINOR))
+else
+VERSION_GOOGLE_CHROME_MAJOR_MINOR :=
+$(info     Google Chrome not installed; skipping version detection)
+endif
+$(info )
+
 install-omz: build-omz
 	./scripts/factory-insert.sh TerminalTabInstance core/dec-terminal-prompt-omz
 
@@ -72,14 +83,22 @@ install-git-kraken:
 	$(call _build-app-scripts-if-exists,GitKraken,App Wrappers/GitKraken/v9.8.2)
 
 
+# VERSION_GOOGLE_CHROME_MAJOR_MINOR := "136.0" # DEBUGGING only
+
 build-google-chrome:
-	@echo "Building Google Chrome scripts..."
-	$(call _build-script,App Wrappers/Google Chrome/136.0/google-chrome-tab)
-	$(call _build-script,App Wrappers/Google Chrome/131.0/dec-google-chrome-tab-finder)
-	$(call _build-script,App Wrappers/Google Chrome/129.0/google-chrome-javascript)
-	$(call _build-script,App Wrappers/Google Chrome/134.0/dec-google-chrome-inspector)
-	$(call _build-script,App Wrappers/Google Chrome/139.0/google-chrome)
+ifneq ($(GOOGLE_CHROME_INSTALLED),yes)
+	@echo "Google Chrome not found, skipping build"
+else ifeq ($(VERSION_GOOGLE_CHROME_MAJOR_MINOR),)
+	@echo "Google Chrome found but version could not be read; skipping build"
+else
+	@echo "Building Google Chrome $(VERSION_GOOGLE_CHROME_MAJOR_MINOR) scripts"
+	# Older versions of scripts are built first and overwritten by newer versions.
+	$(call _build-versioned-directory,Google Chrome,$(APP_WRAPPERS)/Google Chrome,"$(VERSION_GOOGLE_CHROME_MAJOR_MINOR)")
+	@if echo "$(VERSION_GOOGLE_CHROME_MAJOR_MINOR) 136.0" | awk '{exit !($$1 >= $$2)}'; then \
+		osascript "$(APP_WRAPPERS)/Google Chrome/136.0/allow-javascript-from-apple-events.applescript"; \
+	fi
 	@echo "Build Google Chrome completed\n"
+endif
 
 
 build-guitar-pro:
