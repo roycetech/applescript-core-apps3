@@ -52,7 +52,7 @@ build-cleanshot-x:
 	$(call _build-app-scripts-if-exists,CleanShot X,App Wrappers/CleanShot X/4.7.4)
 
 
-build-cursor: build-base-app
+build-cursor:
 	$(call _build-app-scripts-if-exists,Cursor,App Wrappers/Cursor/2.5)
 .PHONY: build-cursor
 
