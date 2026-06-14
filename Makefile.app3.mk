@@ -186,6 +186,9 @@ install-sublime-text:
 	@echo "Build Sublime Text completed"
 
 
+build-talon:
+	$(call _build-app-scripts-if-exists,Talon,App Wrappers/Talon/0.4)
+
 install-text-mate:
 	$(call _build-app-scripts-if-exists,TextMate,App Wrappers/TextMate/2.0.x)
 
