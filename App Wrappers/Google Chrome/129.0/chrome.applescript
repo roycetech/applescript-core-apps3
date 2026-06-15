@@ -14,14 +14,14 @@ use script "core/Text Utilities"
 use loggerFactory : script "core/logger-factory"
 
 use winUtilLib : script "core/window"
-use chromeTabLib : script "core/google-chrome-tab"
-use decChromeTabFinder : script "core/dec-chrome-tab-finder"
 
 use retryLib : script "core/retry"
 
-property winUtil : missing value
+property chromeTabLib : missing value
+
 property logger : missing value
 
+property winUtil : missing value
 property retry : missing value
 
 if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
@@ -84,7 +84,9 @@ on spotCheck()
 end spotCheck
 
 on new()
-	loggerFactory's inject(me)
+	loggerFactory's inject(me)	
+	set chromeTabLib to script "core/google-chrome-tab"
+	set decChromeTabFinder to script "core/dec-chrome-tab-finder"
 	
 	set winUtil to winUtilLib's new()
 	set retry to retryLib's new()

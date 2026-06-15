@@ -18,7 +18,7 @@
 
 use loggerFactory : script "core/logger-factory"
 
-use googleChromeTabLib : script "core/google-chrome-tab"
+property googleChromeTabLib : missing value
 
 property logger : missing value
 
@@ -78,6 +78,7 @@ end spotCheck
 (*  *)
 on decorate(mainScript)
 	loggerFactory's inject(me)
+	set googleChromeTabLib to script "core/google-chrome-tab"
 	
 	script ChromeFinderDecorator
 		property parent : mainScript

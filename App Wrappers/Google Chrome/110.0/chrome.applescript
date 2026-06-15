@@ -13,12 +13,12 @@ use loggerFactory : script "core/logger-factory"
 
 use winUtilLib : script "core/window"
 use chromeTabLib : script "core/chrome-tab"
-use decChromeTabFinder : script "core/dec-chrome-tab-finder"
 
 use retryLib : script "core/retry"
 
-property winUtil : missing value
 property logger : missing value
+
+property winUtil : missing value
 
 property retry : missing value
 
@@ -76,10 +76,10 @@ on spotCheck()
 end spotCheck
 
 on new()
-	loggerFactory's inject(me)
-	
+	loggerFactory's inject(me)	
 	set winUtil to winUtilLib's new()
 	set retry to retryLib's new()
+	set decChromeTabFinder to script "core/dec-chrome-tab-finder"
 	
 	script ChromeInstance
 		on isPlaying()

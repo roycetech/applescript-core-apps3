@@ -31,7 +31,6 @@ use listUtil : script "core/list"
 
 use configLib : script "core/config"
 use retryLib : script "core/retry"
-use chromeLib : script "core/chrome"
 
 use loggerFactory : script "core/logger-factory"
 
@@ -66,6 +65,7 @@ on spotCheck()
 		return
 	end if
 
+	set chromeLib to script "core/chrome"
 	set chrome to chromeLib's new()
 	-- set safariTab to safari's newTab("https://www.apple.com")
 	chrome's getFrontTab()
@@ -118,6 +118,7 @@ end spotCheck
 
 on decorate(chromeTab)
 	loggerFactory's injectBasic(me)
+	set chromeLib to script "core/chrome"
 	set chrome to chromeLib's new()
 	set configSystem to configLib's new("system")
 	set retry to retryLib's new()
