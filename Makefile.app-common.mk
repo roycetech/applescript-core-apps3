@@ -3,13 +3,6 @@
 # @Description:
 # 	Contains the common app scripts for 1st and 3rd party apps.
 
-build-base-app:
-	@echo "\nBuilding Base App scripts..."
-	$(call _build-script,apps/base-app)
-	$(call _build-script,apps/abstract-app-with-file-dialog)
-	@echo "Build Base App scripts completed\n"
-
-
 _build-versioned-directory = \
 	@echo "Building $(1) version $(3) compatible scripts..."; \
 	find "$(2)" -maxdepth 1 -type d -name '[0-9]*.[0-9]*' -print0 | sort -zV | \

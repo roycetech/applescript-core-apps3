@@ -150,7 +150,7 @@ build-mosaic:
 	$(call _build-app-scripts-if-exists,Mosaic,App Wrappers/Mosaic/v1.3.x)
 
 
-build-paste: build-base-app
+build-paste:
 	$(call _build-app-scripts-if-exists,Paste,App Wrappers/Paste/4.4.2)
 
 
