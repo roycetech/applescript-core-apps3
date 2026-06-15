@@ -95,7 +95,7 @@ else
 	# Older versions of scripts are built first and overwritten by newer versions.
 	$(call _build-versioned-directory,Google Chrome,$(APP_WRAPPERS)/Google Chrome,"$(VERSION_GOOGLE_CHROME_MAJOR_MINOR)")
 	@if echo "$(VERSION_GOOGLE_CHROME_MAJOR_MINOR) 136.0" | awk '{exit !($$1 >= $$2)}'; then \
-		osascript "$(APP_WRAPPERS)/Google Chrome/136.0/allow-javascript-from-apple-events.applescript"; \
+		echo TODO; \
 	fi
 	@echo "Build Google Chrome completed\n"
 endif

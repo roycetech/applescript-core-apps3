@@ -34,7 +34,6 @@ use retryLib : script "core/retry"
 
 use loggerFactory : script "core/logger-factory"
 
-
 property logger : missing value
 
 property configSystem : missing value

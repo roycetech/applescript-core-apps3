@@ -84,12 +84,11 @@ on spotCheck()
 end spotCheck
 
 on new()
-	loggerFactory's inject(me)	
-	set chromeTabLib to script "core/google-chrome-tab"
-	set decChromeTabFinder to script "core/dec-chrome-tab-finder"
-	
+	loggerFactory's inject(me)		
 	set winUtil to winUtilLib's new()
 	set retry to retryLib's new()
+	set chromeTabLib to script "core/google-chrome-tab"
+	set decChromeTabFinder to script "core/dec-chrome-tab-finder"
 	
 	script ChromeInstance
 		on isPlaying()
@@ -170,7 +169,7 @@ on new()
 			
 			tell application "Google Chrome"
 				tell front window
-					if (count of tabs) � tabIndex then
+					if (count of tabs) is less than or equal to tabIndex then
 						close tab tabIndex
 					else
 						logger's fatalf("Tab index {} is out of range.", tabIndex)
