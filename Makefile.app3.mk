@@ -123,7 +123,7 @@ endif
 
 
 build-iterm:
-	$(call _build-app-scripts-if-exists,iTerm2,App Wrappers/iTerm2/3.5.x)
+	$(call _build-app-scripts-if-exists,iTerm,App Wrappers/iTerm2/3.5.x)
 
 
 build-intellij:

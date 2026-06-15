@@ -84,7 +84,7 @@ on spotCheck()
 end spotCheck
 
 on new()
-	loggerFactory's inject(me)		
+	loggerFactory's inject(me)
 	set winUtil to winUtilLib's new()
 	set retry to retryLib's new()
 	set chromeTabLib to script "core/google-chrome-tab"
@@ -157,7 +157,7 @@ on new()
 				activate
 				tell active tab of window 1 to activate
 				tell application "System Events"
-					keystroke "i" using {option down, command down}
+					keystroke "i" using {option down, command down} 
 				end tell
 			end tell
 		end openDeveloperTools
