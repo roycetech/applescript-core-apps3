@@ -3,10 +3,6 @@
 # This will contain targets for building optional libraries.
 
 
-# Other libraries
-build-extra: build-counter install-timed-cache
-
-
 build-counter:
 	@echo "Building counter scripts..."
 	$(call _build-script,libraries/counter-plist/dec-counter-hourly)
