@@ -11,8 +11,8 @@ ifeq ($(OMZ_EXISTS),)
 	exit 1
 else
 	@echo "Building OMZ scripts..."
+	$(call _build-script,libraries/zsh/dec-terminal-prompt-omz)
 	$(call _build-script,libraries/zsh/oh-my-zsh)
-	$(call _build-script,apps/1st-party/Terminal/2.14.x/dec-terminal-prompt-omz)
 	@echo "Build OMZ completed\n"
 endif
 
