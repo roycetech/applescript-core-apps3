@@ -45,8 +45,8 @@ on spotCheck()
 	set sut to sutLib's new()
 	set sut to decorate(sut)
 	
-	logger's infof("Project name: {}", sut's getCurrentProjectName())
-	logger's infof("Project path: {}", sut's getCurrentProjectPath())
+	logger's infof("Current Project name: {}", sut's getCurrentProjectName())
+	logger's infof("Current Project path: {}", sut's getCurrentProjectPath())
 	logger's infof("Current file path: {}", sut's getCurrentFilePath())
 	logger's infof("Current file directory: {}", sut's getCurrentFileDirectory())
 	logger's infof("Current filename: {}", sut's getCurrentFilename())
@@ -93,8 +93,8 @@ on decorate(mainScript)
 			end if
 			
 			textUtil's split(windowTitle, unic's SEPARATOR)
-			set titleProjectName to item 2 of result			
-			if titleProjectName contains "(Workspace)" then return  textUtil's stringBefore(titleProjectName, " (Workspace)")
+			set titleProjectName to item 2 of result
+			if titleProjectName contains "(Workspace)" then return textUtil's stringBefore(titleProjectName, " (Workspace)")
 			
 			titleProjectName
 		end getCurrentProjectName
@@ -108,6 +108,17 @@ on decorate(mainScript)
 			logger's debugf("projectName: {}", projectName)
 			
 			if projectName is missing value then return missing value
+			
+			set currentFilePath to getCurrentFilePath()
+			logger's debugf("currentFilePath: {}", currentFilePath)
+			
+			if currentFilePath is missing value then
+				set appHubProjectsLib to script "com.roycetech/app-hub/app-hub-projects"
+				set appHubProjects to appHubProjectsLib's new()
+				if appHubProjects's isRegistered(projectName) then
+					return appHubProjects's new(projectName)'s getProjectPath()
+				end if
+			end if
 			
 			textUtil's stringBefore(getCurrentFilePath(), projectName) & projectName
 		end getCurrentProjectPath
