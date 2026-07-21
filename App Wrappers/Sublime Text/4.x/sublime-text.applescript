@@ -88,6 +88,11 @@ on spotCheck()
 	logger's infof("Current Project Name: {}", currentProjectName)
 	logger's infof("Window title: {}", sut's getWindowTitle())
 	
+	
+	set decoratorLib to script "core/decorator"
+	set decorator to decoratorLib's new(sut)
+	decorator's printHierarchy()
+	
 	-- logger's debugf("Current windows count: {}", sut's getWindowsCount())
 	
 	if currentProjectName is not missing value then
@@ -278,7 +283,7 @@ on new()
 			-- logger's debugf("docName: {}", docName)
 			
 			-- if docName is "Find Results" or docName is missing value or isCurrentFileNewUnsaved() then
-			if docName is "Find Results" or docName is missing value then  -- because isCurrentFileNewUnsaved is broken ATM.
+			if docName is "Find Results" or docName is missing value then -- because isCurrentFileNewUnsaved is broken ATM.
 				return missing value
 			end if
 			
@@ -596,5 +601,5 @@ on new()
 	decTabs's decorate(result)
 	
 	set decorator to decoratorLib's new(result)
-	decorator's decorate()
+	decorator's decorateByName("SublimeTextInstance")
 end new
