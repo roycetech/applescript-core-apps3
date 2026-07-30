@@ -291,7 +291,9 @@ on new()
 			tell application "System Events" to tell process "Sublime Text"
 				tell first window
 					set filename to value of attribute "AXDocument"
-					assertThat of std given condition:filename is not missing value, messageOnFail:"Filename is missing, you may need to restart sublime text"
+					-- assertThat of std given condition:filename is not missing value, messageOnFail:"Filename is missing, you may need to restart sublime text"
+					logger's warn("Filename is missing, you may need to restart Sublime Text")
+					return missing value
 				end tell
 			end tell
 			
