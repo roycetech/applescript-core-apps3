@@ -16,9 +16,10 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.1/stream-deck'
+		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.4/stream-deck'
 		
 	@Change Logs:
+		Sun, Jun 28, 2026, at 12:17:55 PM - Do not switch profile if Stream Deck window is present.
 		Wed, Jan 28, 2026, at 02:45:47 PM - Added handlers #getFirstProfileName, #getLastProfileName, and #shrinkEditorWindow
 		Mon, Nov 03, 2025, at 08:39:39 AM - Handler to switch page.
 		
@@ -323,6 +324,8 @@ on new()
 		*)
 		on switchProfile(deviceName, profileName)
 			tell application "System Events" to tell process "Stream Deck"
+				if exists (window "Stream Deck") then return
+				
 				try
 					click menu item profileName of menu 1 of menu item deviceName of menu 1 of menu bar 2
 					return true
