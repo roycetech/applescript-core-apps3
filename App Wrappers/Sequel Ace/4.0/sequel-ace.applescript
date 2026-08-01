@@ -8,7 +8,7 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Sequel Ace/4.0.x/sequel-ace'
+		./scripts/build-lib.sh 'App Wrappers/Sequel Ace/4.0/sequel-ace'
 
 	@Last Modified: August 18, 2023 9:27 AM
 	@Change Logs:

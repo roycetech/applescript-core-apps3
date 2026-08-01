@@ -12,6 +12,7 @@
 		./scripts/build-lib.sh "App Wrappers/Keyboard Maestro/keyboard-maestro"
 
 	@Last Modified: November 28, 2023 11:05 PM
+	
 	@Change Logs:
 		Wednesday, May 29, 2024 at 2:33:10 PM - Macro sorting handlers.
 		October 20, 2023 10:27 AM - Added focusSelectedMacroGroup().

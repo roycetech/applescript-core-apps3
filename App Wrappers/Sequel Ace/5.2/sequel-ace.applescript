@@ -8,12 +8,13 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Sequel Ace/4.1.x/sequel-ace'
+		./scripts/build-lib.sh 'App Wrappers/Sequel Ace/5.2/sequel-ace'
 
 	@Created: Sun, Oct 27, 2024 at 1:03:15 PM
 	@Last Modified: Sun, Oct 27, 2024 at 1:03:12 PM
 	
 	@Change Logs:
+		Wed, Jul 22, 2026, at 11:27:26 AM - Make connection matching use keyword rather than exact match to accomodate emojis.
 *)
 
 use scripting additions
@@ -210,7 +211,7 @@ on new()
 		on findTab(tabPath)
 			if running of application "Sequel Ace" is false then return missing value
 			if tabPath is missing value then return missing value
-
+			
 			if the class of tabPath is text then
 				if tabPath contains "/" then
 					set tabPath to listUtil's split(tabPath, "/")
@@ -269,7 +270,7 @@ on new()
 		end getFrontTab
 		
 		
-		on newTab(connectionName)
+		on newTab(connectionKeyword)
 			if running of application "Sequel Ace" is false then activate application "Sequel Ace"
 			
 			set frontTab to getFrontTab()
@@ -291,7 +292,7 @@ on new()
 			tell application "System Events" to tell process "Sequel Ace"
 				repeat with nextConnection in rows of outline 1 of scroll area 1 of splitter group 1 of front window
 					try
-						if get value of text field 1 of nextConnection is connectionName then
+						if get value of text field 1 of nextConnection contains connectionKeyword then
 							set selected of nextConnection to true
 							set connectionFound to true
 							logger's info("Found matching connection")
@@ -303,8 +304,9 @@ on new()
 					click button "Connect" of scroll area 2 of splitter group 1 of front window
 					delay 0.1
 				else
-					logger's info("Connection was not found.")
+					logger's infof("Connection was not found for '{}'.", connectionKeyword)
 					return missing value
+					
 				end if
 			end tell
 			

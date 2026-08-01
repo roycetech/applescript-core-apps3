@@ -88,6 +88,11 @@ on spotCheck()
 	logger's infof("Current Project Name: {}", currentProjectName)
 	logger's infof("Window title: {}", sut's getWindowTitle())
 	
+	
+	set decoratorLib to script "core/decorator"
+	set decorator to decoratorLib's new(sut)
+	decorator's printHierarchy()
+	
 	-- logger's debugf("Current windows count: {}", sut's getWindowsCount())
 	
 	if currentProjectName is not missing value then
@@ -278,23 +283,30 @@ on new()
 			-- logger's debugf("docName: {}", docName)
 			
 			-- if docName is "Find Results" or docName is missing value or isCurrentFileNewUnsaved() then
-			if docName is "Find Results" or docName is missing value then  -- because isCurrentFileNewUnsaved is broken ATM.
+			if docName is "Find Results" or docName is missing value then -- because isCurrentFileNewUnsaved is broken ATM.
 				return missing value
+				
 			end if
 			
-			set filename to missing value
+			set axdocument to missing value
 			tell application "System Events" to tell process "Sublime Text"
 				tell first window
-					set filename to value of attribute "AXDocument"
-					assertThat of std given condition:filename is not missing value, messageOnFail:"Filename is missing, you may need to restart sublime text"
+					set axdocument to value of attribute "AXDocument"
+					-- logger's debugf("axdocument: {}", axdocument)
+					-- assertThat of std given condition:filename is not missing value, messageOnFail:"Filename is missing, you may need to restart sublime text"					
+					if axdocument is missing value then
+						logger's warn("Filename is missing, you may need to restart Sublime Text")
+						return missing value
+						
+					end if
 				end tell
 			end tell
 			
-			if filename is missing value then
+			if axdocument is missing value then
 				tell me to error "Could not get the document, try re-opening the project tab"
 			end if
 			
-			set filename to textUtil's stringAfter(filename, "file://")
+			set filename to textUtil's stringAfter(axdocument, "file://")
 			-- logger's debugf("filename: {}", filename)
 			
 			if filename is missing value then return missing value
@@ -596,5 +608,5 @@ on new()
 	decTabs's decorate(result)
 	
 	set decorator to decoratorLib's new(result)
-	decorator's decorate()
+	decorator's decorateByName("SublimeTextInstance")
 end new

@@ -7,10 +7,6 @@ LIST_KEY_NAME=$1
 NEW_ELEMENT=$2
 PLIST_PATH=$3
 
-
-
-# Usage: ./check_plist_key.sh /path/to/plist.plist key_name
-
 if [ $# -ne 3 ]; then
   echo "Usage: ./plist-array-append.sh <list-key-name> <new-element> <plist-path>"
   exit 1

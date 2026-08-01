@@ -11,8 +11,8 @@ ifeq ($(OMZ_EXISTS),)
 	exit 1
 else
 	@echo "Building OMZ scripts..."
+	$(call _build-script,libraries/zsh/dec-terminal-prompt-omz)
 	$(call _build-script,libraries/zsh/oh-my-zsh)
-	$(call _build-script,apps/1st-party/Terminal/2.14.x/dec-terminal-prompt-omz)
 	@echo "Build OMZ completed\n"
 endif
 
@@ -37,6 +37,17 @@ $(info     VERSION_GOOGLE_CHROME_MAJOR_MINOR: $(VERSION_GOOGLE_CHROME_MAJOR_MINO
 else
 VERSION_GOOGLE_CHROME_MAJOR_MINOR :=
 $(info     Google Chrome not installed; skipping version detection)
+endif
+$(info )
+
+SEQUEL_ACE_INSTALLED := $(shell [ -d "/Applications/Sequel Ace.app" ] && echo yes)
+
+ifeq ($(SEQUEL_ACE_INSTALLED),yes)
+VERSION_SEQUEL_ACE_MAJOR_MINOR := $(shell plutil -extract CFBundleShortVersionString raw "/Applications/Sequel Ace.app/Contents/Info.plist" 2>/dev/null | awk -F. '{print $$1 "." $$2}')
+$(info     VERSION_SEQUEL_ACE_MAJOR_MINOR: $(VERSION_SEQUEL_ACE_MAJOR_MINOR))
+else
+VERSION_SEQUEL_ACE_MAJOR_MINOR :=
+$(info     Sequel Ace not installed; skipping version detection)
 endif
 $(info )
 
@@ -163,7 +174,16 @@ build-script-debugger:
 
 
 build-sequel-ace:
-	$(call _build-app-scripts-if-exists-and-unlaunch,Sequel Ace,App Wrappers/Sequel Ace/4.1.x)
+ifneq ($(SEQUEL_ACE_INSTALLED),yes)
+	@echo "Sequel Ace not found, skipping build"
+else ifeq ($(VERSION_SEQUEL_ACE_MAJOR_MINOR),)
+	@echo "Sequel Ace found but version could not be read; skipping build"
+else
+	@echo "Building Sequel Ace $(VERSION_SEQUEL_ACE_MAJOR_MINOR) scripts"
+	# Older versions of scripts are built first and overwritten by newer versions.
+	$(call _build-versioned-directory,Sequel Ace,$(APP_WRAPPERS)/Sequel Ace,"$(VERSION_SEQUEL_ACE_MAJOR_MINOR)",Sequel Ace)
+	@echo "Build Sequel Ace completed\n"
+endif
 
 
 install-sequel-ace: build-sequel-ace
@@ -255,28 +275,6 @@ _build-app-scripts-if-exists = \
 			no_ext=$${file%.applescript}; \
 			yes y | ./scripts/build-lib.sh "$$no_ext"; \
 		done; \
-		echo "Build $(1) scripts completed\n"; \
-	else \
-		echo "$(1) not found, skipping build"; \
-	fi
-
-
-# @1 - App name
-# @2 - folder to build the scripts from
-_build-app-scripts-if-exists-and-unlaunch = \
-	@if [ -d "/Applications/$(1).app" ]; then \
-		echo "Building $(1) scripts..."; \
-		is_running=$$(osascript -e 'tell application "System Events" to return (exists (processes where name is "$(1)"))' 2>/dev/null); \
-		echo "is_running: $$is_running"; \
-		find "$(2)" -maxdepth 1 -type f -name '*.applescript' -print0 | sort -z \
-		| while IFS= read -r -d '' file; do \
-			echo "Building $$file"; \
-			no_ext=$${file%.applescript}; \
-			yes y | ./scripts/build-lib.sh "$$no_ext"; \
-		done; \
-		if [ "$$is_running" = "false" ]; then \
-			killall "$(1)" 2>/dev/null || true; \
-		fi; \
 		echo "Build $(1) scripts completed\n"; \
 	else \
 		echo "$(1) not found, skipping build"; \
