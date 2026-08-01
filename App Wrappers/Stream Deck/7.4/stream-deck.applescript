@@ -97,6 +97,7 @@ on spotCheck()
 	logger's infof("Editor window present: {}", sut's isEditorWindowPresent())
 	logger's infof("Integration: Settings window present: {}", sut's isSettingsWindowPresent())
 	logger's infof("Integration: Is button selected: {}", sut's isButtonSelected())
+	logger's infof("Current device name: {}", sut's getCurrentDeviceName())
 	
 	logger's infof("First profile name: {}", sut's getFirstProfileName())
 	logger's infof("Last profile name: {}", sut's getLastProfileName())
@@ -156,17 +157,24 @@ end spotCheck
 (*  *)
 on new()
 	if std's appExists("Elgato Stream Deck") is false then error "Elgato Stream Deck app needs to be installed"
-
+	
 	loggerFactory's inject(me)
 	set retry to retryLib's new()
 	set cliclick to cliclickLib's new()
-
+	
 	set appWithFileDialogLib to script "core/abstract-app-with-file-dialog"
 	set appWithFileDialog to appWithFileDialogLib's new("Stream Deck")
-		
+	
 	script StreamDeckInstance
 		property parent : appWithFileDialog
-
+		
+		on getCurrentDeviceName()
+			set shellResult to do shell script "ioreg -p IOUSB -l | grep -i 'Stream Deck' | grep kUSBProductString | awk -F= '{ print $2 }' | tr -d '\"'"
+			if shellResult is "" then return missing value
+			
+			shellResult
+		end getCurrentDeviceName
+		
 		on getFirstProfileName()
 			if running of application "Elgato Stream Deck" is false then return missing value
 			
