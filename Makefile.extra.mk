@@ -87,6 +87,13 @@ uninstall-process-dock:
 	./scripts/factory-remove.sh ProcessInstance core/dec-process-dock
 
 
+install-javascript-react:
+	./scripts/factory-insert.sh SafariTabInstance core/dec-javascript-react
+
+uninstall-javascript-react:
+	./scripts/factory-remove.sh SafariTabInstance core/dec-javascript-react
+
+
 build-redis:
 	@echo "Building Redis scripts..."
 	@if ! plutil -extract RedisCLI raw ~/applescript-core/config-lib-factory.plist &>/dev/null; then \
