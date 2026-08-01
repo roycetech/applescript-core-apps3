@@ -141,7 +141,9 @@ on new()
 			do shell script CLICLICK_CLI & " kd:ctrl c:. ku:ctrl"
 		end rightClick
 
-
+		(*
+			@theWindow - System Events window
+		*)
 		on doubleClickRelative at theWindow given fromLeft:pLeft : missing value, fromBottom:pBottom : missing value, fromTop:pTop : missing value, fromRight:pRight : missing value
 			tell application "System Events"
 				tell theWindow -- do not merge with above, it will fail.
@@ -170,7 +172,9 @@ on new()
 			doubleClickAtXy(theX, theY)
 		end doubleClickRelative
 
-
+		(*
+			@theWindow - System Events window
+		*)
 		on lclickRelative at theWindow given fromLeft:pLeft : missing value, fromBottom:pBottom : missing value, fromTop:pTop : missing value, fromRight:pRight : missing value
 			tell application "System Events"
 				tell theWindow -- do not merge with above, it will fail.
