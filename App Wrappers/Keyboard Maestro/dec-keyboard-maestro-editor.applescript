@@ -11,6 +11,7 @@
 	@Created: Wednesday, August 14, 2024 at 5:53:03 PM
 	@Last Modified: Wednesday, August 14, 2024 at 5:53:03 PM
 	@Change Logs:
+		Sat, Aug 1, 2026 - Added #setSelectedMacroByIndex handler.
 		Sun, Jan 25, 2026, at 02:22:50 PM - Added #triggerRun handler.
 		Tue, Apr 29, 2025 at 12:53:30 PM - Added focusSelectedMacro handler
 		Wed, Feb 19, 2025 at 01:34:30 PM - Added Delete/Add Macro Group app.
@@ -44,7 +45,9 @@ on spotCheck()
 		Manual: Set app availability option
 		Manual: Focus Macro
 		Manual: Focus Action By Index
+		Manual: Select Macro By Index
 		Manual: Focus Search
+		
 		Manual: Trigger Run
 	")
 	
@@ -101,13 +104,17 @@ on spotCheck()
 		sut's focusSelectedMacro()
 		
 	else if caseIndex is 8 then
-		sut's setSelectedActionByIndex(1)
+		-- sut's setSelectedActionByIndex(1)
+		sut's setSelectedActionByIndex(-1)
 		
 	else if caseIndex is 9 then
+		sut's setSelectedMacroByIndex(1)
+		
+	else if caseIndex is 10 then
 		activate application "Keyboard Maestro"
 		sut's focusSearch()
 		
-	else if caseIndex is 10 then
+	else if caseIndex is 11 then
 		sut's triggerRun()
 		
 	else
@@ -167,16 +174,23 @@ on decorate(mainScript)
 		end getSelectedActionIndex
 		
 		
-		(* DOES NOT WORK! *)
 		on setSelectedActionByIndex(actionIndex)
 			if running of application "Keyboard Maestro" is false then return missing value
 			
 			tell application "System Events" to tell process "Keyboard Maestro"
-				set frontmost to true
-				set selected of group actionIndex of scroll area 3 of splitter group 1 of group 6 of my getEditorWindow() to true
+				-- set frontmost to true
+				if actionIndex is -1 then set actionIndex to the count of groups of scroll area 3 of splitter group 1 of group 6 of my getEditorWindow()
+				
 				try
+					set selected of group actionIndex of scroll area 3 of splitter group 1 of group 6 of my getEditorWindow() to true
 					click group actionIndex of scroll area 3 of splitter group 1 of group 6 of my getEditorWindow()
 				end try
+			end tell
+			
+			tell application "Keyboard Maestro"
+				first macro whose selected is true
+				action actionIndex of result
+				set selection to result
 			end tell
 		end setSelectedActionByIndex
 		
@@ -220,6 +234,26 @@ on decorate(mainScript)
 				end try
 			end tell
 		end selectMacro
+		
+		
+		(*
+			Select a macro in the macros column by 1-based index.
+			@Caveat: Only macros currently loaded in the scroll area are addressable;
+			use scrollMacrosPane if the target may be off-screen.
+		*)
+		on setSelectedMacroByIndex(macroIndex)
+			if running of application "Keyboard Maestro" is false then return
+			
+			tell application "System Events" to tell process "Keyboard Maestro"
+				-- set frontmost to true  -- required.
+			if macroIndex is -1 then set macroIndex to the count of groups of scroll area 2 of splitter group 1 of group 6 of my getEditorWindow()
+				try
+					click menu item "Select Macros Column" of menu 1 of menu bar item "View" of menu bar 1
+					set selected of group macroIndex of scroll area 2 of splitter group 1 of group 6 of my getEditorWindow() to true
+					click group macroIndex of scroll area 2 of splitter group 1 of group 6 of my getEditorWindow()
+				end try
+			end tell
+		end setSelectedMacroByIndex
 		
 		(*
 			Create a macro via the UI.
