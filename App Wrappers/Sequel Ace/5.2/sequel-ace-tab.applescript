@@ -16,6 +16,7 @@
 	@Last Modified: Sun, Oct 27, 2024 at 1:03:12 PM
 
 	@Change Logs:
+		Sat, Aug 01, 2026, at 05:14:05 PM - Added clearTableFilterText and hasTableFilterText
 		Fri, Jul 24, 2026, at 10:48:33 AM - Added #switchDatabase().
 		
 *)
@@ -55,6 +56,9 @@ on spotCheck()
 		Manual: Run Query		
 		Manual: Current Info (Connection Tab, DB Not Selected, Table Not Selected, Happy)
 		Manual: Apply Filters
+		
+		Manual: Clear Table Filter
+		Manual: Focus
 	")
 	
 	set sequelAceLib to script "core/sequel-ace"
@@ -81,13 +85,15 @@ on spotCheck()
 	*)
 	logger's infof("Is connected: {}", sut's isConnected())
 	logger's infof("Tab Name: {}", name of appWindow of sut as text)
-	logger's debugf("Identifier tokens: {}", sut's _getIdentifierTokens())
+	-- logger's debugf("Identifier tokens: {}", sut's _getIdentifierTokens())
 	logger's infof("Connection Name: {}", sut's getConnectionName())
 	logger's infof("Database Name: {}", sut's getDatabaseName())
 	logger's infof("Table Name: {}", sut's getTableName())
 	logger's infof("Is table selected: {}", sut's isTableSelected())
+	logger's infof("Has table filter text: {}", sut's hasTableFilterText())
 	-- logger's infof("Editor text: {}", sut's getEditorText())  -- Too noisy
 	logger's infof("Selected text: {}", sut's getSelectedText())
+	logger's infof("Has table selection: {}", sut's hasTableSelection())
 	
 	if caseIndex is 1 then
 		
@@ -115,6 +121,11 @@ on spotCheck()
 		sutTab's switchTab("Query")
 		sutTab's switchTab("Content")
 		
+	else if caseIndex is 6 then
+		sut's clearTableFilterText()
+		
+	else if caseIndex is 7 then
+		sut's focus()
 		
 	else if caseIndex is 10 then
 		set frontTab to sut's getFrontTab()
@@ -143,11 +154,49 @@ on new(pAppWindow)
 	script SequelAceTabInstance
 		property appWindow : pAppWindow -- non-sysEveWindow
 		
+		
+		on hasTableSelection()
+			tell application "System Events" to tell process "Sequel Ace"
+				try
+					return exists (first row of table 1 of scroll area 1 of splitter group 1 of splitter group 1 of front window whose selected is true)
+				end try
+			end tell
+			false
+		end hasTableSelection
+		
+		
+		on hasTableFilterText()
+			set tableFilterText to getTableFilterText()
+			tableFilterText is not missing value and tableFilterText is not ""
+		end hasTableFilterText
+		
+		
+		on getTableFilterText()
+			tell application "System Events" to tell process "Sequel Ace"
+				try
+					return value of text field 1 of splitter group 1 of splitter group 1 of front window
+				end try
+			end tell
+			
+			missing value
+		end getTableFilterText
+		
+		
+		on clearTableFilterText()
+			if not hasTableFilterText() then return
+			
+			tell application "System Events" to tell process "Sequel Ace"
+				first button of text field 1 of splitter group 1 of splitter group 1 of front window whose description is "cancel"
+				click result
+			end tell
+		end clearTableFilterText
+		
+		
 		on setDatabase(databaseName)
 			-- TODO 
 		end setDatabase
-
-
+		
+		
 		on switchDatabase(databaseName)
 			tell application "System Events" to tell process "Sequel Ace"
 				click pop up button 1 of toolbar 1 of front window
@@ -157,7 +206,7 @@ on new(pAppWindow)
 					perform action "AXCancel" of menu item 1 of menu 1 of pop up button 1 of toolbar 1 of front window
 				end try
 			end tell
-
+			
 		end switchDatabase
 		
 		(*
@@ -242,6 +291,7 @@ on new(pAppWindow)
 				try
 					set selectedStatement to value of attribute "AXSelectedText" of text area 1 of scroll area 1 of splitter group 1 of splitter group 1 of group 1 of splitter group 1 of front window
 					if selectedStatement is "" then return missing value
+					
 				on error -- when connection tab is focused
 					return missing value
 				end try
@@ -291,13 +341,15 @@ on new(pAppWindow)
 		end connectByName
 		
 		
-		(**)
+		(*
+			What is this for?
+		*)
 		on focus()
 			if running of application "Sequel Ace" is false then return
 			
 			tell application "System Events" to tell process "Sequel Ace"
 				try
-					click (first menu item of first menu of menu bar item "Window" of first menu bar whose title is equal to name of my appWindow)
+					click (last menu item of first menu of menu bar item "Window" of first menu bar whose title is equal to name of my appWindow)
 				on error
 					return false
 				end try
@@ -308,7 +360,7 @@ on new(pAppWindow)
 		on isConnected()
 			if running of application "Sequel Ace" is false then return false
 			
-			focus()
+			-- focus()  -- Why is this needed here?
 			
 			tell application "System Events" to tell process "Sequel Ace"
 				if (count of windows) is 0 then return false
@@ -352,11 +404,13 @@ on new(pAppWindow)
 				window is shrunk.
 		*)
 		on switchView(viewName)
-			logger's debugf("viewName: {}", viewName)
+			-- logger's debugf("viewName: {}", viewName)
 			if running of application "Sequel Ace" is false then return
+			
 			if not isConnected() then
 				logger's warn("switchView: The target tab is not currently connected.")
 				return
+				
 			end if
 			
 			tell application "System Events" to tell process "Sequel Ace"
