@@ -435,41 +435,69 @@ on decorate(googleChromeTab)
 		end waitToBeInvisible
 
 		(*
+			Cross-browser JavaScript execution contract:
+			executeJavaScript          - side effects, errors swallowed
+			evaluateJavaScript         - returns result to AppleScript
+			executeJavaScriptUnchecked - raw passthrough, no error handling
+			runScript* names are legacy aliases.
+
 			Created because _runScript is bugged but it is widely used and I
 			don't want to break the other uses. TODO: Unit Tests.
 		*)
+		(*
+			@Deprecation, use executeJavaScriptUnchecked().
+		*)
 		on runScript(scriptText)
-			tell application "Google Chrome"
+			executeJavaScriptUnchecked(scriptText)
+		end runScript
 
-			end tell
+		(*
+			@Deprecation, use evaluateJavaScript().
+		*)
+		on runScriptPlain(scriptText)
+			evaluateJavaScript(scriptText)
+		end runScriptPlain
+
+		on executeJavaScript(javascriptSource)
+			if javascriptSource does not end with ";" then set javascriptSource to javascriptSource & ";"
 			tell application "Google Chrome" to tell window 1
 				tell active tab
-					execute javascript scriptText
+					execute javascript ("try {" & javascriptSource & "} catch(e) { e.message; }")
 				end tell
 			end tell
-		end runScript
+		end executeJavaScript
 
 		(*
 			@returns result of the javascript.
 		*)
 		on _runScript(scriptText)
 			set montereyFix to "var jsresult = (" & scriptText & ");if (typeof(jsresult) === 'boolean') { jsresult ? 'true' : 'false'} else jsresult;"
-			set runScriptResult to runScriptPlain(montereyFix)
+			set runScriptResult to evaluateJavaScript(montereyFix)
 			if runScriptResult is equal to "true" then return true
 			if runScriptResult is equal to "false" then return false
 
 			runScriptResult
 		end _runScript
 
-		on runScriptPlain(scriptText)
-			if scriptText does not end with ";" then set scriptText to scriptText & ";"
+		on evaluateJavaScript(javascriptSource)
+			if javascriptSource does not end with ";" then set javascriptSource to javascriptSource & ";"
 			tell application "Google Chrome" to tell window 1
 				tell active tab
-					return execute javascript ("try {" & scriptText & "} catch(e) { e.message; }")
+					return execute javascript ("try {" & javascriptSource & "} catch(e) { e.message; }")
 				end tell
 			end tell
-		end runScriptPlain
+		end evaluateJavaScript
 
+		on executeJavaScriptUnchecked(javascriptSource)
+			tell application "Google Chrome"
+
+			end tell
+			tell application "Google Chrome" to tell window 1
+				tell active tab
+					execute javascript javascriptSource
+				end tell
+			end tell
+		end executeJavaScriptUnchecked
 
 		on submitFirstForm()
 			runScriptPlain("document.querySelector('form').submit()")

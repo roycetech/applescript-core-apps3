@@ -112,44 +112,32 @@ on decorate(microsoftEdgeTab)
 		property parent : microsoftEdgeTab
 		
 		(*
+			Cross-browser JavaScript execution contract:
+			executeJavaScript          - side effects, errors swallowed
+			evaluateJavaScript         - returns result to AppleScript
+			executeJavaScriptUnchecked - raw passthrough, no error handling
+			runScript* names are legacy aliases.
+
 			Created because _runScript is bugged but it is widely used and I
 			don't want to break the other uses. TODO: Unit Tests.
 		*)
-		on runScript(scriptText)
-			tell application "Microsoft Edge"
-				
-			end tell
-			tell application "Microsoft Edge" to tell window 1
-				tell active tab
-					execute javascript scriptText
-				end tell
-			end tell
-		end runScript
-		
-		
 		(*
-			@returns result of the javascript.
+			@Deprecation, use executeJavaScriptUnchecked().
 		*)
-		on _runScript(scriptText)
-			set montereyFix to "var jsresult = (" & scriptText & ");if (typeof(jsresult) === 'boolean') { jsresult ? 'true' : 'false'} else jsresult;"
-			set runScriptResult to runScriptPlain(montereyFix)
-			if runScriptResult is equal to "true" then return true
-			if runScriptResult is equal to "false" then return false
-			
-			runScriptResult
-		end _runScript
-		
-		
+		on runScript(scriptText)
+			executeJavaScriptUnchecked(scriptText)
+		end runScript
+
+		(*
+			@Deprecation, use evaluateJavaScript().
+		*)
 		on runScriptPlain(scriptText)
-			if scriptText does not end with ";" then set scriptText to scriptText & ";"
-			tell application "Microsoft Edge" to tell window 1
-				tell active tab
-					return execute javascript ("try {" & scriptText & "} catch(e) { e.message; }")
-				end tell
-			end tell
+			evaluateJavaScript(scriptText)
 		end runScriptPlain
-		
-		
+
+		(*
+			@Deprecation, use executeJavaScriptUnchecked(). Targets the front window.
+		*)
 		on runScriptDirect(scriptText)
 			tell application "Microsoft Edge" to tell front window
 				tell active tab
@@ -157,5 +145,46 @@ on decorate(microsoftEdgeTab)
 				end tell
 			end tell
 		end runScriptDirect
+
+		on executeJavaScript(javascriptSource)
+			if javascriptSource does not end with ";" then set javascriptSource to javascriptSource & ";"
+			tell application "Microsoft Edge" to tell window 1
+				tell active tab
+					execute javascript ("try {" & javascriptSource & "} catch(e) { e.message; }")
+				end tell
+			end tell
+		end executeJavaScript
+
+		(*
+			@returns result of the javascript.
+		*)
+		on _runScript(scriptText)
+			set montereyFix to "var jsresult = (" & scriptText & ");if (typeof(jsresult) === 'boolean') { jsresult ? 'true' : 'false'} else jsresult;"
+			set runScriptResult to evaluateJavaScript(montereyFix)
+			if runScriptResult is equal to "true" then return true
+			if runScriptResult is equal to "false" then return false
+			
+			runScriptResult
+		end _runScript
+
+		on evaluateJavaScript(javascriptSource)
+			if javascriptSource does not end with ";" then set javascriptSource to javascriptSource & ";"
+			tell application "Microsoft Edge" to tell window 1
+				tell active tab
+					return execute javascript ("try {" & javascriptSource & "} catch(e) { e.message; }")
+				end tell
+			end tell
+		end evaluateJavaScript
+
+		on executeJavaScriptUnchecked(javascriptSource)
+			tell application "Microsoft Edge"
+				
+			end tell
+			tell application "Microsoft Edge" to tell window 1
+				tell active tab
+					execute javascript javascriptSource
+				end tell
+			end tell
+		end executeJavaScriptUnchecked
 	end script
 end decorate

@@ -78,6 +78,7 @@ on spotCheck()
 	set sut to new()
 	logger's infof("Secondary side bar visible: {}", sut's isSecondarySideBarVisible())
 	logger's infof("Is minimap visible: {}", sut's isMinimapVisible())
+	logger's infof("Is agents window in front: {}", sut's isAgentsWindowFrontmost())
 	
 	if caseIndex is 1 then
 		
@@ -150,6 +151,19 @@ on new()
 	
 	script CursorInstance
 		property parent : appWithFileDialog
+		
+		on isAgentsWindowFrontmost()
+			if running of application "Cursor" is false then return false
+			
+			tell application "System Events" to tell process "Cursor"
+				try
+					return title of front window is "Cursor Agents"
+				end try
+			end tell
+			
+			false
+		end isAgentsWindowInFront
+		
 		
 		(*
 			@projectTabKeyword - e.g. applescript-core.

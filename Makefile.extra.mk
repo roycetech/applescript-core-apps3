@@ -3,10 +3,6 @@
 # This will contain targets for building optional libraries.
 
 
-# Other libraries
-build-extra: build-counter install-timed-cache
-
-
 build-counter:
 	@echo "Building counter scripts..."
 	$(call _build-script,libraries/counter-plist/dec-counter-hourly)
@@ -89,6 +85,13 @@ install-process-dock:
 
 uninstall-process-dock:
 	./scripts/factory-remove.sh ProcessInstance core/dec-process-dock
+
+
+install-javascript-react:
+	./scripts/factory-insert.sh SafariTabInstance core/dec-javascript-react
+
+uninstall-javascript-react:
+	./scripts/factory-remove.sh SafariTabInstance core/dec-javascript-react
 
 
 build-redis:

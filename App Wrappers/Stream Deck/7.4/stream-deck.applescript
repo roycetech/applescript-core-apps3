@@ -16,9 +16,10 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.1/stream-deck'
+		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.4/stream-deck'
 		
 	@Change Logs:
+		Sun, Jun 28, 2026, at 12:17:55 PM - Do not switch profile if Stream Deck window is present.
 		Wed, Jan 28, 2026, at 02:45:47 PM - Added handlers #getFirstProfileName, #getLastProfileName, and #shrinkEditorWindow
 		Mon, Nov 03, 2025, at 08:39:39 AM - Handler to switch page.
 		
@@ -96,6 +97,7 @@ on spotCheck()
 	logger's infof("Editor window present: {}", sut's isEditorWindowPresent())
 	logger's infof("Integration: Settings window present: {}", sut's isSettingsWindowPresent())
 	logger's infof("Integration: Is button selected: {}", sut's isButtonSelected())
+	logger's infof("Current device name: {}", sut's getCurrentDeviceName())
 	
 	logger's infof("First profile name: {}", sut's getFirstProfileName())
 	logger's infof("Last profile name: {}", sut's getLastProfileName())
@@ -155,17 +157,24 @@ end spotCheck
 (*  *)
 on new()
 	if std's appExists("Elgato Stream Deck") is false then error "Elgato Stream Deck app needs to be installed"
-
+	
 	loggerFactory's inject(me)
 	set retry to retryLib's new()
 	set cliclick to cliclickLib's new()
-
+	
 	set appWithFileDialogLib to script "core/abstract-app-with-file-dialog"
 	set appWithFileDialog to appWithFileDialogLib's new("Stream Deck")
-		
+	
 	script StreamDeckInstance
 		property parent : appWithFileDialog
-
+		
+		on getCurrentDeviceName()
+			set shellResult to do shell script "ioreg -p IOUSB -l | grep -i 'Stream Deck' | grep kUSBProductString | awk -F= '{ print $2 }' | tr -d '\"'"
+			if shellResult is "" then return missing value
+			
+			shellResult
+		end getCurrentDeviceName
+		
 		on getFirstProfileName()
 			if running of application "Elgato Stream Deck" is false then return missing value
 			
@@ -323,6 +332,8 @@ on new()
 		*)
 		on switchProfile(deviceName, profileName)
 			tell application "System Events" to tell process "Stream Deck"
+				if exists (window "Stream Deck") then return
+				
 				try
 					click menu item profileName of menu 1 of menu item deviceName of menu 1 of menu bar 2
 					return true
