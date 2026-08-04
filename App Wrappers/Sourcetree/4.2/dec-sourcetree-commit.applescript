@@ -69,6 +69,7 @@ on spotCheck()
 		set sutAuthorType to "alternative"
 		set sutAuthorName to "spotAuthorName"
 		set sutAuthorEmail to "spotAuthorEmail"
+				
 		-- set sutAuthorType to "default"
 		
 		logger's infof("sutAuthorType: {}", sutAuthorType)
@@ -113,7 +114,9 @@ on decorate(mainScript)
 			
 			tell application "System Events" to tell process "Sourcetree"
 				set frontmost to true
-				set value of text field 1 of pop over 1 of first image of splitter group 1 of splitter group 1 of splitter group 1 of front window to authorName
+				set targetTextField to text field 1 of pop over 1 of first image of splitter group 1 of splitter group 1 of splitter group 1 of front window
+				set focused of targetTextField to true
+				set value of targetTextField to authorName
 			end tell
 		end setAlternativeName
 		
@@ -125,7 +128,9 @@ on decorate(mainScript)
 			
 			tell application "System Events" to tell process "Sourcetree"
 				set frontmost to true
-				set value of text field 2 of pop over 1 of first image of splitter group 1 of splitter group 1 of splitter group 1 of front window to email
+				set targetTextField to text field 2 of pop over 1 of first image of splitter group 1 of splitter group 1 of splitter group 1 of front window
+				set focused of targetTextField to true
+				set value of targetTextField to email
 			end tell
 		end setAlternativeEmail
 		
@@ -162,11 +167,18 @@ on decorate(mainScript)
 			if authorType is "alternative" then
 				setAlternativeName(authorName)
 				setAlternativeEmail(authorEmail)
+				
+				tell application "System Events" to tell process "Sourcetree"
+					click button "OK" of pop over 1 of image 1 of splitter group 1 of splitter group 1 of splitter group 1 of front window
+				end tell
+				
+			else
+				tell application "System Events" to tell process "Sourcetree"
+					perform action "AXCancel" of pop over 1 of image 1 of splitter group 1 of splitter group 1 of splitter group 1 of front window
+				end tell
+				
 			end if
 			
-			tell application "System Events" to tell process "Sourcetree"
-				perform action "AXCancel" of pop over 1 of image 1 of splitter group 1 of splitter group 1 of splitter group 1 of front window
-			end tell
 		end switchAuthorType
 		
 		on triggerAuthor()
