@@ -13,6 +13,7 @@
 	@Last Modified: 2026-03-31 18:35:40
 
 	@Change Logs:
+		Thu, Aug 13, 2026, at 05:00:20 PM - Added handlers to switch to and from IDE/Agents window.
 		Sat, May 23, 2026, at 06:56:52 PM - Allow configured decorator.
 		Fri, Mar 27, 2026, at 02:37:47 PM - Added return value to the
 			#switchProjectTab handler.
@@ -61,8 +62,8 @@ on spotCheck()
 
 		Manual: Open File via Shell
 		Manual: Close Current Project
-		Dummy
-		Dummy
+		Manual: Switch IDE Window
+		Manual: Switch To Agents Window
 		Dummy
 	")
 	
@@ -128,6 +129,12 @@ on spotCheck()
 	else if caseIndex is 12 then
 		sut's closeProject()
 		
+	else if caseIndex is 13 then
+		sut's switchToIdeWindow()
+		
+	else if caseIndex is 14 then
+		sut's switchToAgentsWindow()
+		
 	end if
 	
 	spot's finish()
@@ -152,6 +159,31 @@ on new()
 	script CursorInstance
 		property parent : appWithFileDialog
 		
+		on switchToIdeWindow()
+			if running of application "Cursor" is false then return
+			
+			tell application "System Events" to tell process "Cursor"
+				try
+					click (menu item "Open IDE" of menu 1 of menu bar item "File" of menu bar 1)
+				end try
+			end tell
+		end switchToIdeWindow
+		
+		
+		on switchToAgentsWindow()
+			if running of application "Cursor" is false then return
+			
+			tell application "System Events" to tell process "Cursor"
+				try
+					click (menu item "Switch to Agents Window" of menu 1 of menu bar item "File" of menu bar 1)
+				on error the errorMessage number the errorNumber
+					click (menu item "New Agents Window" of menu 1 of menu bar item "File" of menu bar 1)
+					
+				end try
+			end tell
+		end switchToAgentsWindow
+		
+		
 		on isAgentsWindowFrontmost()
 			if running of application "Cursor" is false then return false
 			
@@ -162,7 +194,7 @@ on new()
 			end tell
 			
 			false
-		end isAgentsWindowInFront
+		end isAgentsWindowFrontmost
 		
 		
 		(*
@@ -174,7 +206,8 @@ on new()
 			
 			tell application "System Events" to tell process "Cursor"
 				try
-					click (first radio button of tab group 1 of window 1 whose title contains projectTabKeyword)
+					-- click (first radio button of tab group 1 of window 1 whose title contains projectTabKeyword)
+					click (first radio button of tab group 1 of window 1 whose title ends with projectTabKeyword)
 					return true
 				end try
 			end tell
@@ -190,8 +223,6 @@ on new()
 		
 		
 		on openFileViaShell(filePath)
-			if running of application "Cursor" is false then return
-			
 			set expandedFilePath to expandPath(filePath)
 			set cursorCli to configSystem's getValue(CONFIG_KEY_CURSOR_CLI)
 			if cursorCli is missing value then return
