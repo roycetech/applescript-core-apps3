@@ -13,6 +13,7 @@
 	@Last Modified: 2026-03-24 17:31:35
 
 	@Change Logs:
+		Thu, Aug 27, 2026, at 12:11:38 PM - Added closeLogViewer, renamed showLogs to showLogViewer.
 
 *)
 use std : script "core/std"
@@ -185,7 +186,7 @@ on new()
 		end disableSpeech
 
 
-		on showLogs()
+		on showLogViewer()
 			if not isRunning() then return
 
 			tell application "System Events" to tell process appName
@@ -193,6 +194,10 @@ on new()
 					click menu item "View Log" of menu "Scripting" of menu item "Scripting" of menu "Talon" of menu bar item 1 of menu bar 2
 				end try
 			end tell
+		end showLogs
+
+		on showLogs()
+			showLogViewer()
 		end showLogs
 
 
