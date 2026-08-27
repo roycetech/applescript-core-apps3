@@ -14,6 +14,7 @@
 	@Last Modified: Sun, Oct 27, 2024 at 1:03:12 PM
 	
 	@Change Logs:
+		Mon, Aug 24, 2026, at 03:02:57 PM - Fix, remove the OK step to the connecting... dialog.
 		Wed, Jul 22, 2026, at 11:27:26 AM - Make connection matching use keyword rather than exact match to accomodate emojis.
 *)
 
@@ -32,7 +33,8 @@ property logger : missing value
 
 property retry : missing value
 
-property TEST_CONNECTION_NAME : "MySQL5 Docker"
+-- property TEST_CONNECTION_NAME : "MySQL5 Docker"
+property TEST_CONNECTION_NAME : "Local Default"
 
 (* Used for testing only. *)
 property CONFIG_USER : "user"
@@ -84,9 +86,10 @@ on spotCheck()
 		
 	else if caseIndex is 2 then
 		set sutConnectionName to "Unicorn"
-		set sutConnectionName to testConnection
+		set sutConnectionName to TEST_CONNECTION_NAME
 		logger's debugf("sutConnectionName: {}", sutConnectionName)
-		sut's newTab(sutConnectionName)
+		
+		log sut's newTab(sutConnectionName)
 		
 	else if caseIndex is 3 then
 		set sutTab to sut's getFrontTab()
@@ -315,10 +318,6 @@ on new()
 				if exists (first window whose title does not start with "Connecting") then -- Dialog appears during connection regardless if there's error or not.
 					set dialogWindow to first window whose title does not start with "Connecting"
 					logger's infof("Dialog text: {}", value of static text 1 of dialogWindow)
-					try
-						click button "OK" of dialogWindow -- Auto-dismiss if error
-					end try -- Ignore if not found.
-					return missing value
 				else
 					logger's debug("No dialog window found")
 				end if
