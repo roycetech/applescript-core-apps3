@@ -249,7 +249,7 @@ build-vlc:
 
 
 build-zoom:
-	$(call _build-app-scripts-if-exists,Zoom,App Wrappers/zoom.us/6.0.x)
+	$(call _build-app-scripts-if-exists,zoom.us,App Wrappers/zoom.us/6.0.x)
 
 
 install-zoom: build-zoom
