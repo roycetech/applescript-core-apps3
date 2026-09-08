@@ -389,6 +389,11 @@ on new()
 		end lclick
 		
 		
+		on leftClick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, relativex:relativexArg : 0, relativey:relativeyArg : 0
+			lclick at theUi given reset:resetArg, smoothing:smoothingArg, relativex:relativexArg, relativey:relativeyArg
+		end leftClick
+		
+		 
 		(*
 			Copied from lclick at.
 		*)
