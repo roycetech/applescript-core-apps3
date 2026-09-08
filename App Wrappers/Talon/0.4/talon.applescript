@@ -7,12 +7,13 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh App Wrappers/Talon/0.4/talon
+		./scripts/build-lib.sh 'App Wrappers/Talon/0.4/talon'
 
 	@Created: Sat, Apr 05, 2025 at 12:24:07 PM
-	@Last Modified: 2026-03-24 17:31:35
+	@Last Modified: 2026-09-04 16:41:00
 
 	@Change Logs:
+		Fri, Sep 04, 2026, at 4:41:00 PM - Added subtitle show/hide toggle.
 		Thu, Aug 27, 2026, at 12:11:38 PM - Added closeLogViewer, renamed showLogs to showLogViewer.
 
 *)
@@ -27,7 +28,7 @@ if {"Script Editor", "Script Debugger", "osascript"} contains the name of curren
 on spotCheck()
 	loggerFactory's inject(me)
 	logger's start()
-
+	
 	set listUtil to script "core/list"
 	set cases to listUtil's splitAndTrimParagraphs("
 		NOOP
@@ -38,11 +39,11 @@ on spotCheck()
 
 		Manual: Close Talon Logs
 		Manual: Bring Log Viewer to Front
-		Dummy
-		Dummy
+		Manual: Enable Subtitle
+		Manual: Disable Subtitle
 		Dummy
 	")
-
+	
 	set spotScript to script "core/spot-test"
 	set spotClass to spotScript's new()
 	set spot to spotClass's new(me, cases)
@@ -51,34 +52,41 @@ on spotCheck()
 		logger's finish()
 		return
 	end if
-
+	
 	set sut to new()
 	logger's infof("Running: {}", sut's isRunning())
 	logger's infof("Listening: {}", sut's isListening())
+	logger's infof("Subtitle Shown: {}", sut's isSubtitleShown())
 	logger's infof("Log Viewer Present: {}", sut's isLogViewerPresent())
-
+	
 	if caseIndex is 1 then
-
+		
 	else if caseIndex is 2 then
 		sut's enableSpeech()
-
+		
 	else if caseIndex is 3 then
 		sut's disableSpeech()
-
+		
 	else if caseIndex is 4 then
 		sut's showLogs()
-
+		
 	else if caseIndex is 5 then
 		sut's showConsole()
-
+		
 	else if caseIndex is 6 then
 		sut's closeLogViewer()
-
+		
 	else if caseIndex is 7 then
 		sut's bringLogViewerToFront()
-
+		
+	else if caseIndex is 8 then
+		sut's enableSubtitle()
+		
+	else if caseIndex is 9 then
+		sut's disableSubtitle()
+		
 	end if
-
+	
 	spot's finish()
 	logger's finish()
 end spotCheck
@@ -87,76 +95,76 @@ end spotCheck
 (*  *)
 on new()
 	loggerFactory's inject(me)
-
+	
 	script TalonInstance
-
+		
 		(* App may not be installed, so don't reference it directly. *)
 		property appName : "Talon"
-
+		
 		on isLogViewerPresent()
 			if not isRunning() then return false
-
+			
 			tell application "System Events" to tell process appName
 				try
 					return exists (window "Talon Log Viewer")
 				end try
 			end tell
-
+			
 			false
 		end isLogViewerPresent
-
-
+		
+		
 		on closeLogViewer()
 			if not isLogViewerPresent() then return
-
+			
 			tell application "System Events" to tell process appName
 				try
 					click (first button of window 1 whose description is "close button")
 				end try
 			end tell
 		end closeLogViewer
-
-
+		
+		
 		on bringLogViewerToFront()
 			if not isLogViewerPresent() then return
-
+			
 			tell application "System Events" to tell process appName
 				set frontmost to true
 				perform action "AXRaise" of window 1
 			end tell
 		end bringLogViewerToFront
-
-
+		
+		
 		on isRunning()
 			if not std's appExists(appName) then return false
-
+			
 			running of application appName
 		end isRunning
-
+		
 		(*
 			No straight forward way to implement this. Let's use a dedicated terminal tab for this
 		*)
 		on isListening()
 			if not isRunning() then return false
-
+			
 			tell application "System Events" to tell process appName
 				try
 					-- Assuming the first menu item contains the state.
 					set menuItemMarker to value of attribute "AXMenuItemMarkChar" of menu item 1 of menu "Speech Recognition" of menu item "Speech Recognition" of menu "Talon" of menu bar item 1 of menu bar 2
 					return menuItemMarker is not missing value
-
+					
 				end try
 			end tell
-
+			
 			false
 		end isListening
-
-
+		
+		
 		(*
 		*)
 		on toggleSpeech()
 			if not isRunning() then return false
-
+			
 			tell application "System Events" to tell process appName
 				try
 					-- Assuming the first menu item contains the state.
@@ -164,52 +172,93 @@ on new()
 					click menu item 1 of menu 1 of menu item "Speech Recognition" of menu "Talon" of menu bar item 1 of menu bar 2
 				end try
 			end tell
-
+			
 		end toggleSpeech
-
+		
 		(*		*)
 		on enableSpeech()
 			if not isRunning() then return
 			if isListening() then return
-
+			
 			toggleSpeech()
 		end enableSpeech
-
-
+		
+		
 		(*		*)
 		on disableSpeech()
 			if not isRunning() then return
-
+			
 			if not isListening() then return
-
+			
 			toggleSpeech()
 		end disableSpeech
-
-
+		
+		
+		on isSubtitleShown()
+			if not isRunning() then return false
+			
+			tell application "System Events" to tell process appName
+				try
+					set menuItemMarker to value of attribute "AXMenuItemMarkChar" of menu item "Show Subtitles" of menu "Speech Recognition" of menu item "Speech Recognition" of menu "Talon" of menu bar item 1 of menu bar 2
+					return menuItemMarker is not missing value
+				end try
+			end tell
+			
+			false
+		end isSubtitleShown
+		
+		
+		on toggleSubtitle()
+			if not isRunning() then return
+			
+			tell application "System Events" to tell process appName
+				try
+					click menu item "Show Subtitles" of menu "Speech Recognition" of menu item "Speech Recognition" of menu "Talon" of menu bar item 1 of menu bar 2
+				end try
+			end tell
+		end toggleSubtitle
+		
+		
+		on enableSubtitle()
+			if not isRunning() then return
+			if isSubtitleShown() then return
+			
+			toggleSubtitle()
+		end enableSubtitle
+		
+		
+		on disableSubtitle()
+			if not isRunning() then return
+			if not isSubtitleShown() then return
+			
+			toggleSubtitle()
+		end disableSubtitle
+		
+		
 		on showLogViewer()
 			if not isRunning() then return
-
+			
 			tell application "System Events" to tell process appName
 				try
 					click menu item "View Log" of menu "Scripting" of menu item "Scripting" of menu "Talon" of menu bar item 1 of menu bar 2
 				end try
 			end tell
-		end showLogs
-
+		end showLogViewer
+		
 		on showLogs()
 			showLogViewer()
 		end showLogs
-
-
+		
+		
 		on showConsole()
 			if running of application "Talon" is false then return
-
+			
 			tell application "System Events" to tell process appName
 				try
 					click menu item "Console (REPL)" of menu "Scripting" of menu item "Scripting" of menu "Talon" of menu bar item 1 of menu bar 2
 				end try
 			end tell
 		end showConsole
-
+		
 	end script
 end new
