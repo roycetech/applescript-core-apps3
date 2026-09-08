@@ -21,17 +21,14 @@ use retryLib : script "core/retry"
 
 use loggerFactory : script "core/logger-factory"
 
-use kbLib : script "core/keyboard" -- Used to dismiss popup on error
-
 property logger : missing value
 
 property retry : missing value
-property kb : missing value
 
 if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
-	loggerFactory's inject(me)
+	loggerFactory's injectBasic(me)
 	logger's start()
 	
 	set listUtil to script "core/list"
@@ -128,12 +125,12 @@ end spotCheck
 
 (*  *)
 on decorate(mainScript)
-	loggerFactory's inject(me)
+	loggerFactory's injectBasic(me)
 	set retry to retryLib's new()
-	set kb to kbLib's new()
 	
 	script KeyboardMaestroEditorDecorator
 		property parent : mainScript
+		property kb : missing value
 		
 		on triggerRun()
 			set editorWindow to getEditorWindow()
@@ -310,6 +307,10 @@ on decorate(mainScript)
 					click menu item targetOption of menu 1 of appAvailabilityPopup
 					delay 0.1
 				on error the errorMessage number the errorNumber
+					if kb is missing value then
+						set kbLib to script "core/keyboard"
+						set kb to kbLib's new()
+					end if
 					kb's pressKey("escape")
 				end try
 			end tell
