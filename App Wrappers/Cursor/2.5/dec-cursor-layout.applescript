@@ -1,6 +1,6 @@
 (*
 	@Purpose:
-
+		Provide handlers for the different code editing layouts.
 
 	@Project:
 		applescript-core-apps3
@@ -10,6 +10,7 @@
 
 	@Created: Wed, Feb 25, 2026 at 02:26:39 PM
 	@Last Modified: 2026-03-24 17:31:31
+	
 	@Change Logs:
 *)
 use loggerFactory : script "core/logger-factory"

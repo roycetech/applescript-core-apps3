@@ -51,6 +51,17 @@ $(info     Sequel Ace not installed; skipping version detection)
 endif
 $(info )
 
+CURSOR_INSTALLED := $(shell [ -d "/Applications/Cursor.app" ] && echo yes)
+
+ifeq ($(CURSOR_INSTALLED),yes)
+VERSION_CURSOR_MAJOR_MINOR := $(shell plutil -extract CFBundleShortVersionString raw "/Applications/Cursor.app/Contents/Info.plist" 2>/dev/null | awk -F. '{print $$1 "." $$2}')
+$(info     VERSION_CURSOR_MAJOR_MINOR: $(VERSION_CURSOR_MAJOR_MINOR))
+else
+VERSION_CURSOR_MAJOR_MINOR :=
+$(info     Cursor not installed; skipping version detection)
+endif
+$(info )
+
 install-omz: build-omz
 	./scripts/factory-insert.sh TerminalTabInstance core/dec-terminal-prompt-omz
 
@@ -75,7 +86,16 @@ build-cleanshot-x:
 
 
 build-cursor:
-	$(call _build-app-scripts-if-exists,Cursor,App Wrappers/Cursor/2.5)
+ifneq ($(CURSOR_INSTALLED),yes)
+	@echo "Cursor not found, skipping build"
+else ifeq ($(VERSION_CURSOR_MAJOR_MINOR),)
+	@echo "Cursor found but version could not be read; skipping build"
+else
+	@echo "Building Cursor $(VERSION_CURSOR_MAJOR_MINOR) scripts"
+	# Older versions of scripts are built first and overwritten by newer versions.
+	$(call _build-versioned-directory,Cursor,$(APP_WRAPPERS)/Cursor,"$(VERSION_CURSOR_MAJOR_MINOR)")
+	@echo "Build Cursor completed\n"
+endif
 .PHONY: build-cursor
 
 install-cursor: build-cursor

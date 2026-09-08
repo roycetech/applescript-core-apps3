@@ -7,12 +7,13 @@
 		Cursor dialog should refer to window 1, instead of the usual window "Open" etc.
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Cursor/2.5/cursor'
+		./scripts/build-lib.sh 'App Wrappers/Cursor/3.18/cursor'
 
 	@Created: Wed, Feb 25, 2026 at 12:27:36 PM
 	@Last Modified: 2026-03-31 18:35:40
 
 	@Change Logs:
+		Tue, Sep 08, 2026, at 09:18:02 AM - Added status bar decorator.
 		Thu, Aug 13, 2026, at 05:00:20 PM - Added handlers to switch to and from IDE/Agents window.
 		Sat, May 23, 2026, at 06:56:52 PM - Allow configured decorator.
 		Fri, Mar 27, 2026, at 02:37:47 PM - Added return value to the
