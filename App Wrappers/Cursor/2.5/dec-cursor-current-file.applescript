@@ -88,7 +88,7 @@ on decorate(mainScript)
 			end tell
 			
 			if windowTitle does not contain unic's SEPARATOR then
-				logger's debug("No separator in the title")
+				-- logger's debug("No separator in the title")
 				return windowTitle
 			end if
 			
@@ -105,12 +105,12 @@ on decorate(mainScript)
 		*)
 		on getCurrentProjectPath()
 			set projectName to getCurrentProjectName() -- Diverged from vsc in the handler name to get the project name.
-			logger's debugf("projectName: {}", projectName)
+			-- logger's debugf("projectName: {}", projectName)
 			
 			if projectName is missing value then return missing value
 			
 			set currentFilePath to getCurrentFilePath()
-			logger's debugf("currentFilePath: {}", currentFilePath)
+			-- logger's debugf("currentFilePath: {}", currentFilePath)
 			
 			if currentFilePath is missing value then
 				set appHubProjectsLib to script "com.roycetech/app-hub/app-hub-projects"
