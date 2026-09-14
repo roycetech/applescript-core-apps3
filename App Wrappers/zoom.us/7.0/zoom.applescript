@@ -105,6 +105,7 @@ on spotCheck()
 	set sut to new()
 	logger's infof("Current tab name: {}", sut's getTabName())
 	logger's infof("Meeting in progress?: {}", sut's isMeetingInProgress())
+	logger's infof("Meeting window present?: {}", sut's isMeetingWindowPresent())
 	
 	if caseIndex is 1 then
 		
@@ -208,6 +209,18 @@ on new()
 	
 	script ZoomInstance
 		property useSSO : false
+		
+		on isMeetingWindowPresent()
+			if running of application "zoom.us" is false then return false
+			
+			tell application "System Events" to tell process "zoom.us"
+				try
+					return exists (window "Zoom Meeting")
+				end try
+			end tell
+			
+			false
+		end isMeetingWindowPresent
 		
 		(* @returns true if the main window is detected to be ready before timing out. *)
 		on waitMainWindowReady()
