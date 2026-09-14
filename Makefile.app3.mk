@@ -62,6 +62,28 @@ $(info     Cursor not installed; skipping version detection)
 endif
 $(info )
 
+STREAM_DECK_INSTALLED := $(shell [ -d "/Applications/Elgato Stream Deck.app" ] && echo yes)
+
+ifeq ($(STREAM_DECK_INSTALLED),yes)
+VERSION_STREAM_DECK_MAJOR_MINOR := $(shell plutil -extract CFBundleShortVersionString raw "/Applications/Elgato Stream Deck.app/Contents/Info.plist" 2>/dev/null | awk -F. '{print $$1 "." $$2}')
+$(info     VERSION_STREAM_DECK_MAJOR_MINOR: $(VERSION_STREAM_DECK_MAJOR_MINOR))
+else
+VERSION_STREAM_DECK_MAJOR_MINOR :=
+$(info     Stream Deck not installed; skipping version detection)
+endif
+$(info )
+
+ZOOM_INSTALLED := $(shell [ -d "/Applications/zoom.us.app" ] && echo yes)
+
+ifeq ($(ZOOM_INSTALLED),yes)
+VERSION_ZOOM_MAJOR_MINOR := $(shell plutil -extract CFBundleShortVersionString raw "/Applications/zoom.us.app/Contents/Info.plist" 2>/dev/null | awk -F. '{print $$1 "." $$2}')
+$(info     VERSION_ZOOM_MAJOR_MINOR: $(VERSION_ZOOM_MAJOR_MINOR))
+else
+VERSION_ZOOM_MAJOR_MINOR :=
+$(info     zoom.us not installed; skipping version detection)
+endif
+$(info )
+
 install-omz: build-omz
 	./scripts/factory-insert.sh TerminalTabInstance core/dec-terminal-prompt-omz
 
@@ -221,14 +243,19 @@ build-step-two:
 
 
 build-stream-deck:
-	# 6.x is the OLDEST version.
-	@echo "Building Stream Deck scripts..."
-	$(call _build-script,App Wrappers/Stream Deck/6.x/dec-spot-stream-deck)
-	$(call _build-script,App Wrappers/Stream Deck/6.9.1/dec-stream-deck-settings)
-	$(call _build-script,App Wrappers/Stream Deck/6.9.1/dec-stream-deck-button)
-# 	$(call _build-script,App Wrappers/Stream Deck/6.9.1/stream-deck)
-	$(call _build-script,App Wrappers/Stream Deck/7.0/stream-deck)
-	@echo "Build Stream Deck completed"
+ifneq ($(STREAM_DECK_INSTALLED),yes)
+	@echo "Stream Deck not found, skipping build"
+else ifeq ($(VERSION_STREAM_DECK_MAJOR_MINOR),)
+	@echo "Stream Deck found but version could not be read; skipping build"
+else
+	@echo "Building Stream Deck $(VERSION_STREAM_DECK_MAJOR_MINOR) scripts"
+	# 6.x is the OLDEST version and is not matched by the numeric version glob.
+	# Older versions of scripts are built first and overwritten by newer versions.
+	$(call _build-app-scripts,Stream Deck 6.x,$(APP_WRAPPERS)/Stream Deck/6.x)
+	$(call _build-versioned-directory,Stream Deck,$(APP_WRAPPERS)/Stream Deck,"$(VERSION_STREAM_DECK_MAJOR_MINOR)",Stream Deck)
+	@echo "Build Stream Deck completed\n"
+endif
+.PHONY: build-stream-deck
 
 
 install-stream-deck: build-stream-deck
@@ -269,7 +296,19 @@ build-vlc:
 
 
 build-zoom:
-	$(call _build-app-scripts-if-exists,zoom.us,App Wrappers/zoom.us/6.0.x)
+ifneq ($(ZOOM_INSTALLED),yes)
+	@echo "zoom.us not found, skipping build"
+else ifeq ($(VERSION_ZOOM_MAJOR_MINOR),)
+	@echo "zoom.us found but version could not be read; skipping build"
+else
+	@echo "Building zoom.us $(VERSION_ZOOM_MAJOR_MINOR) scripts"
+	# 5.x is the OLDEST version and is not matched by the numeric version glob.
+	# Older versions of scripts are built first and overwritten by newer versions.
+	$(call _build-app-scripts,zoom.us 5.x,$(APP_WRAPPERS)/zoom.us/5.x)
+	$(call _build-versioned-directory,zoom.us,$(APP_WRAPPERS)/zoom.us,"$(VERSION_ZOOM_MAJOR_MINOR)",zoom.us)
+	@echo "Build zoom.us completed\n"
+endif
+.PHONY: build-zoom
 
 
 install-zoom: build-zoom

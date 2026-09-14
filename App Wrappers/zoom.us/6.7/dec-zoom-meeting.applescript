@@ -6,7 +6,7 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh App Wrappers/zoom.us/6.7/dec-zoom-meeting
+		./scripts/build-lib.sh 'App Wrappers/zoom.us/6.7/dec-zoom-meeting'
 
 	@Created: Monday, August 12, 2024 at 4:29:20 PM
 	@Last Modified: 2026-04-03 10:15:44
@@ -27,7 +27,7 @@ if {"Script Editor", "Script Debugger", "osascript"} contains the name of curren
 on spotCheck()
 	loggerFactory's inject(me)
 	logger's start()
-
+	
 	set listUtil to script "core/list"
 	set cases to listUtil's splitAndTrimParagraphs("
 		NOOP: Info
@@ -42,7 +42,7 @@ on spotCheck()
 		Dummy
 		Dummy
 	")
-
+	
 	set spotScript to script "core/spot-test"
 	set spotClass to spotScript's new()
 	set spot to spotClass's new(me, cases)
@@ -51,38 +51,38 @@ on spotCheck()
 		logger's finish()
 		return
 	end if
-
+	
 	-- activate application ""
 	set sutLib to script "core/zoom"
 	set sut to sutLib's new()
 	set sut to decorate(sut)
-
+	
 	logger's infof("Meeting in progress?: {}", sut's isMeetingInProgress())
 	if caseIndex is 1 then
-
+		
 	else if caseIndex is 2 then
 		sut's newMeeting()
-
+		
 	else if caseIndex is 3 then
 		sut's endMeeting()
-
+		
 	else if caseIndex is 4 then
 		sut's leaveMeeting()
-
+		
 	else if caseIndex is 5 then
 		sut's endMeetingForAll()
-
+		
 	else if caseIndex is 6 then
 		sut's waitInstallUpdates()
-
+		
 	else if caseIndex is 7 then
 		sut's waitForMeetingPreviewWindow()
 		assertThat of std given condition:result is true, messageOnFail:"Failed to detect the zoom meeting preview window"
-
+		
 	else
-
+		
 	end if
-
+	
 	spot's finish()
 	logger's finish()
 end spotCheck
@@ -91,10 +91,10 @@ end spotCheck
 (*  *)
 on decorate(mainScript)
 	loggerFactory's inject(me)
-
+	
 	script ZoomMeetingDecorator
 		property parent : mainScript
-
+		
 		(*
 			Select the new meeting from the Home window.
 
@@ -116,33 +116,33 @@ on decorate(mainScript)
 					return
 				end if
 			end if
-
+			
 			-- waitInstallUpdates()
-
+			
 			if getTabName() is not "Home" then
 				switchTab("Home")
 			end if
-
+			
 			tell application "System Events" to tell process "zoom.us"
 				-- click (first button of splitter group 1 of window "Zoom Workplace" whose description starts with "Start a new meeting")
 				click (first button of group 1 of splitter group 1 of window "Zoom Workplace" whose description starts with "Start" and description contains "new meeting") -- 6.5.9
 			end tell
 		end newMeeting
-
-
+		
+		
 		on waitForMeetingPreview()
-
+			
 		end waitForMeetingPreview
-
-
+		
+		
 		on waitInstallUpdates()
 			if running of application "zoom.us" is false then return
-
+			
 			set retry to retryLib's new()
 			set autoUpdaterName to "ZoomAutoUpdater"
 			script WaitInstall
 				if running of application autoUpdaterName is false then return false
-
+				
 				tell application "System Events" to tell process autoUpdaterName
 					click button "Close" of window 1
 					return true
@@ -155,8 +155,8 @@ on decorate(mainScript)
 				waitMainWindowReady()
 			end if
 		end waitInstallUpdates
-
-
+		
+		
 		(*
 			Used to detect that meeting has loaded and is in progress
 			@returns true if meeting progress was detected.
@@ -171,55 +171,55 @@ on decorate(mainScript)
 			exec of retry on MeetingProgressWaiter
 			result is not missing value
 		end waitForMeetingInProgress
-
-
+		
+		
 		on isMeetingInProgress()
 			if running of application "zoom.us" is false then return false
-
+			
 			tell application "System Events" to tell process "zoom.us"
 				try
 					return exists (first button of window "Zoom Meeting" whose description contains "mute")
 				end try
 			end tell
-
+			
 			false
 		end isMeetingInProgress
-
-
+		
+		
 		(*
 			Triggers the End button
 		*)
 		on endMeeting()
 			if running of application "zoom.us" is false then return
-
+			
 			tell application "System Events" to tell process "zoom.us"
 				try
 					click (first button of window "Zoom Meeting" whose description is "End")
 				end try
 			end tell
 		end endMeeting
-
-
+		
+		
 		on endMeetingForAll()
 			if running of application "zoom.us" is false then return
-
+			
 			endMeeting()
 			delay 0.1
-
+			
 			tell application "System Events" to tell process "zoom.us"
 				try
 					click (first button of window "" whose description is "End meeting for all")
 				end try
 			end tell
-
+			
 		end endMeetingForAll
-
+		
 		on leaveMeeting()
 			if running of application "zoom.us" is false then return
-
+			
 			endMeeting()
 			delay 0.1
-
+			
 			tell application "System Events" to tell process "zoom.us"
 				try
 					click (first button of window "" whose description is "Leave meeting")
