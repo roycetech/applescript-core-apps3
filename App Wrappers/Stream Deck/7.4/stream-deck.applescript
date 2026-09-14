@@ -39,14 +39,16 @@ use decoratorLib : script "core/decorator"
 use decStreamDeckSettings : script "core/dec-stream-deck-settings"
 use decStreamDeckButton : script "core/dec-stream-deck-button"
 use decStreamDeckDialog : script "core/dec-stream-deck-dialog"
+use decStreamDeckVirtualDeck : script "core/dec-stream-deck-virtual-deck"
 use cliclickLib : script "core/cliclick"
 
 property logger : missing value
 
 property retry : missing value
-property isSpot : false
 property kb : missing value
 property cliclick : missing value
+
+property isSpot : false
 
 property SHELL_USB_CHECK : "ioreg -p IOUSB -l | grep -i 'Stream Deck'"
 
@@ -364,6 +366,7 @@ on new()
 	decStreamDeckSettings's decorate(result)
 	decStreamDeckButton's decorate(result)
 	decStreamDeckDialog's decorate(result)
+	decStreamDeckVirtualDeck's decorate(result)
 	
 	(*
 	if not isSpot then

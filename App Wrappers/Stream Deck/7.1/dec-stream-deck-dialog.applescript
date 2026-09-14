@@ -6,10 +6,11 @@
 		applescript-core-apps3
 
 	@Build:
-		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.1.x/dec-stream-deck-dialog'
+		./scripts/build-lib.sh 'App Wrappers/Stream Deck/7.1/dec-stream-deck-dialog'
 
 	@Created: Wed, Jan 28, 2026 at 04:42:47 PM
 	@Last Modified: Wed, Jan 28, 2026 at 04:42:47 PM
+	
 	@Change Logs:
 *)
 use loggerFactory : script "core/logger-factory"
@@ -71,7 +72,7 @@ end spotCheck
 
 (*  *)
 on decorate(mainScript)
-	loggerFactory's inject(me)
+	loggerFactory's injectBasic(me)
 	
 	script StreamDeckDialogDecorator
 		property parent : mainScript
