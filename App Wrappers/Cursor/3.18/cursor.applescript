@@ -13,6 +13,7 @@
 	@Last Modified: 2026-03-31 18:35:40
 
 	@Change Logs:
+		Sun, Sep 13, 2026, at 02:31:05 PM - Added terminal decorator
 		Tue, Sep 08, 2026, at 09:18:02 AM - Added status bar decorator.
 		Thu, Aug 13, 2026, at 05:00:20 PM - Added handlers to switch to and from IDE/Agents window.
 		Sat, May 23, 2026, at 06:56:52 PM - Allow configured decorator.
@@ -147,8 +148,6 @@ end spotCheck
 (*  *)
 on new()
 	loggerFactory's inject(me)
-	set decCursorLayout to script "core/dec-cursor-layout"
-	set decCursorCurrentFile to script "core/dec-cursor-current-file"
 	set kb to kbLib's new()
 	set configSystem to configSystemLib's new(CONFIG_TYPE_SYSTEM)
 	
@@ -156,8 +155,12 @@ on new()
 	set appWithFileDialog to appWithFileDialogLib's new("Cursor")
 	set appWithFileDialog's doSetDialogTypeAsWindowReference to false
 	
+	set decCursorLayout to script "core/dec-cursor-layout"
+	set decCursorCurrentFile to script "core/dec-cursor-current-file"
 	set decCursorHighLevel to script "core/dec-cursor-high-level"
 	set decCursorStatusBar to script "core/dec-cursor-status-bar"
+	set decCursorAgentPanel to script "core/dec-cursor-agent-panel"
+	set decCursorTerminal to script "core/dec-cursor-terminal"
 	
 	script CursorInstance
 		property parent : appWithFileDialog 
@@ -437,6 +440,8 @@ on new()
 	decCursorCurrentFile's decorate(result)
 	decCursorHighLevel's decorate(result)
 	decCursorStatusBar's decorate(result)
+	decCursorAgentPanel's decorate(result)
+	decCursorTerminal's decorate(result)
 	
 	set decorator to decoratorLib's new(result)
 	decorator's decorateByName("CursorInstance")
