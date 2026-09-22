@@ -17,10 +17,12 @@
 use loggerFactory : script "core/logger-factory"
 
 use clipLib : script "core/clipboard"
+use cliclickLib : script "core/cliclick"
 
 property logger : missing value
 
 property clip : missing value
+property cliclick : missing value
 
 property LABEL_STAGED_FILES : "Staged files"
 
@@ -119,6 +121,7 @@ end spotCheck
 on decorate(mainScript)
 	loggerFactory's inject(me)
 	set clip to clipLib's new()
+	set cliclick to cliclickLib's new()
 	
 	script SourcetreeFileDecorator
 		property parent : mainScript
@@ -198,15 +201,20 @@ on decorate(mainScript)
 			set fileRows to _getFileRowsUI()
 			if fileRows is missing value then return
 			
+			set showInFinderButton to missing value
 			tell application "System Events" to tell process "Sourcetree"
 				try
 					first item of fileRows whose selected is true
-					set ellipsisButton to the button 1 of last UI element of result
+					set ellipsisButton to button 1 of last UI element of result
 					click ellipsisButton
 					delay 0.5
-					click button "Show in Finder" of pop over 1 of ellipsisButton
+					-- click button "Show in Finder" of pop over 1 of ellipsisButton
+					set showInFinderButton to button "Show in Finder" of pop over 1 of ellipsisButton
 				end try
 			end tell
+			if showInFinderButton is not missing value then
+				leftClick of cliclick at showInFinderButton
+			end if
 		end revealSelectedFile
 		
 		
