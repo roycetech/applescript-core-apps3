@@ -12,28 +12,13 @@
 	@Last Modified: Sat, Sep 12, 2026 at 04:06:55 PM
 	
 	@Change Logs:
-		Sun, Sep 27, 2026, at 02:05:00 AM - Post-success cleanup presses escape 3x, not once; one wasn't enough to fully clear the leftover open level, confirmed live it was still corrupting the next call's panel detection
-		Sun, Sep 27, 2026, at 01:50:00 AM - Verify the revealed submenu is actually Model, not Effort, before typing; both resolve via the same fixed path so hovering could land on either -- confirmed live it was still occasionally flipping Effort even with label-based item lookup
-		Sun, Sep 27, 2026, at 01:35:00 AM - Press escape defensively after a successful switch too; Return doesn't always fully close every open level, and a leftover was corrupting the NEXT call's panel detection
-		Sun, Sep 27, 2026, at 01:20:00 AM - Retry the hover-to-reveal-Model-submenu step itself (up to 3x) before giving up on that settings menu instance; the hover doesn't always land on the first try, same as the mode trigger click
-		Sun, Sep 27, 2026, at 01:00:00 AM - Restored Model-submenu navigation (direct top-level type-ahead didn't reliably reach the model list); find the Model item by label via _findModelMenuItem instead of "last group's last item", which was landing on Effort
-		Sun, Sep 27, 2026, at 12:35:00 AM - switchAgentModel drops the settings-menu/Model-submenu navigation entirely; clicks the trigger then types + Return directly, mirroring switchAgentMode, since navigating into "Model" was the unreliable part
-		Sun, Sep 27, 2026, at 12:15:00 AM - Compare with "starts with" instead of exact match; models like Sonnet append extra state (e.g. "No Thinking") beyond effort that we don't try to enumerate
-		Sun, Sep 27, 2026, at 12:00:00 AM - switchAgentModel strips a trailing effort/speed word (Low/Medium/High/Extra High/Max/Fast) before matching/typing; the Model submenu only lists base model names, Effort is a separate control
-		Sat, Sep 26, 2026, at 11:30:00 PM - Fetch modelTrigger fresh each retry (not once outside the loop) and hover the Model item instead of clicking it; clicking it toggled Effort instead of opening the Model submenu
-		Sat, Sep 26, 2026, at 11:00:00 PM - getAgentModel now catches errors re-resolving modelTrigger; an uncaught one was crashing switchAgentModel intermittently
-		Sat, Sep 26, 2026, at 10:45:00 PM - switchAgentModel retries the whole open-menu flow and types the model name + Return via native type-ahead, instead of clicking a specific (possibly stale/virtualized) menu item
-		Sat, Sep 26, 2026, at 10:15:00 PM - switchAgentMode types the mode name + Return instead of clicking a row; the dropdown isn't in the accessibility tree at all
-		Sat, Sep 26, 2026, at 09:30:00 PM - Retry mode trigger click up to 3x; the synthetic click into the dropdown was landing inconsistently
-		Sat, Sep 26, 2026, at 08:20:00 PM - Revert mode row to single click; double click re-hit the relabeled trigger and reopened the dropdown
-		Sat, Sep 26, 2026, at 08:10:00 PM - Double-click mode/model menu row on selection; single click was intermittently missed
-		Sat, Sep 26, 2026, at 07:15:00 PM - Keep composer validation outside System Events tell so panel/mode/model resolve
-		Sat, Sep 26, 2026, at 07:10:00 PM - Validate agent panel candidates; bad path no longer throws
+		Sun, Sep 27, 2026, at 09:35:00 AM - Fix Model submenu reveal: find the Model item by label instead of position, hover it (clicking toggles a different quick setting) via a horizontal slide-in so the pointer never crosses the row above (which opened Effort/Context/Thinking instead), verify the revealed list by size before typing into it, and refetch dynamic-name references (model trigger, Model item) fresh each retry instead of reusing a stale one
 		Sat, Sep 26, 2026, at 07:05:00 PM - Update getAgentPanel/getComposerRoot paths for Cursor 3.22 layout
 		Fri, Sep 25, 2026, at 01:40:00 PM - Switch agent model via model picker (settings menu > Model submenu)
 		Fri, Sep 25, 2026, at 08:00:00 AM - Switch agent mode via mode menu click (sidebar-aware paths)
 		Thu, Sep 24, 2026, at 09:46:03 PM - 
 *)
+use scripting additions
 use textUtil : script "core/string"
 
 use loggerFactory : script "core/logger-factory"
@@ -115,14 +100,14 @@ on spotCheck()
 		logger's debugf("sutAgentMode: {}", sutAgentMode)
 		
 		sut's switchAgentMode(sutAgentMode)
-		 
+		
 	else if caseIndex is 6 then
 		(*
 			TODO: Fails when Right Sub-Sidebar is present.
 		*)
 		set sutAgentModel to "Claude Sonnet 5"
 		set sutAgentModel to "Composer 2.5"
-		-- set sutAgentModel to "Grok 4.6"
+		set sutAgentModel to "Grok 4.6"
 		logger's debugf("sutAgentModel: {}", sutAgentModel)
 		
 		sut's switchAgentModel(sutAgentModel)
@@ -345,7 +330,7 @@ on decorate(mainScript)
 				if modelTrigger is missing value then
 					logger's debug("switchAgentModel: model trigger not found, retrying")
 				else
-					leftClick of cliclick at modelTrigger
+					leftClick of cliclick at modelTrigger given relativex:10
 					
 					-- The page container index shifts while a popup is open.
 					set settingsMenu to missing value
@@ -368,27 +353,31 @@ on decorate(mainScript)
 							the group/item count varies by which quick toggles the current
 							model exposes (Fast/Context/Effort aren't always the same count).
 						*)
-						set modelMenuItem to my _findModelMenuItem(settingsMenu)
-						if modelMenuItem is missing value then
-							logger's debug("switchAgentModel: Model menu item not found, retrying")
-							kb's pressKey("escape")
-						else
-							(*
-								This item's submenu isn't a real nested NSMenu (it structurally
-								reports zero submenus) -- clicking it acts like a toggle/select
-								rather than "open submenu" (confirmed live: it can flip the
-								Effort level instead of opening Model). Hovering reveals it
-								correctly, same as a natural mouseover on a cascading menu --
-								but like the mode trigger click, the hover itself doesn't
-								always land, and can land on the adjacent Effort item instead
-								(same fixed path resolves either cascading list, since both
-								just occupy "a submenu at that slot"). So retry the hover AND
-								verify the revealed list is actually models, not effort levels.
-							*)
-							set modelListMenu to missing value
-							repeat 3 times
-								movePointer of cliclick at modelMenuItem
-
+						set modelListMenu to missing value
+						repeat 3 times
+							set modelMenuItem to my _findModelMenuItem(settingsMenu)
+							if modelMenuItem is missing value then
+								logger's debug("switchAgentModel: Model menu item not found, retrying")
+								kb's pressKey("escape")
+								delay 0.2
+							else
+								(*
+									This item's submenu isn't a real nested NSMenu (it structurally
+									reports zero submenus) -- clicking it acts like a toggle/select
+									rather than "open submenu" (confirmed live: it can flip a
+									different quick toggle instead of opening Model). Hovering
+									reveals it correctly, same as a natural mouseover on a cascading
+									menu -- but an instant jump-to-target hover doesn't always land
+									(this custom-rendered menu needs a real mouseenter, and System
+									Events' own "select" command doesn't trigger it either, confirmed
+									live). Sliding in horizontally at the item's own row first
+									tested noticeably more reliable live than jumping straight there.
+									modelMenuItem is refetched fresh each attempt too: same
+									dynamic-name staleness as modelTrigger (its name is
+									"Model <current model>").
+								*)
+								my _hoverModelMenuItem(modelMenuItem)
+								
 								set candidateMenu to missing value
 								repeat 20 times
 									try
@@ -399,44 +388,44 @@ on decorate(mainScript)
 									end try
 									delay 0.1
 								end repeat
-
+								
 								if candidateMenu is missing value then
 									-- keep retrying
-								else if my _looksLikeEffortList(candidateMenu) then
-									logger's debug("switchAgentModel: opened Effort list instead of Model, retrying hover")
+								else if not my _looksLikeModelList(candidateMenu) then
+									logger's debug("switchAgentModel: opened a different quick-toggle list instead of Model, retrying hover")
 									kb's pressKey("escape")
 									delay 0.2
 								else
 									set modelListMenu to candidateMenu
 									exit repeat
 								end if
-							end repeat
-
-							if modelListMenu is missing value then
-								logger's debug("switchAgentModel: model list menu did not open, retrying")
-								kb's pressKey("escape")
-							else
-								kb's typeText(targetName)
-								delay 0.2
-								kb's pressKey("return")
-								delay 0.5
-
-								set currentModel to getAgentModel()
-								if currentModel is not missing value and my _normalizeModelName(currentModel) starts with my _normalizeModelName(modelName) then
-									-- Defensive: Return doesn't always fully close every level; a
-									-- stray leftover here corrupted the NEXT call's detection.
-									-- One escape wasn't enough in practice -- confirmed live it can
-									-- take 3 to fully clear.
-									repeat 3 times
-										kb's pressKey("escape")
-										delay 0.15
-									end repeat
-									return true
-								end if
-
-								kb's pressKey("escape")
-								kb's pressKey("escape")
 							end if
+						end repeat
+						
+						if modelListMenu is missing value then
+							logger's debug("switchAgentModel: model list menu did not open, retrying")
+							kb's pressKey("escape")
+						else
+							kb's typeText(targetName)
+							delay 0.2
+							kb's pressKey("return")
+							delay 0.5
+							
+							set currentModel to getAgentModel()
+							if currentModel is not missing value and my _normalizeModelName(currentModel) starts with my _normalizeModelName(modelName) then
+								-- Defensive: Return doesn't always fully close every level; a
+								-- stray leftover here corrupted the NEXT call's detection.
+								-- One escape wasn't enough in practice -- confirmed live it can
+								-- take 3 to fully clear.
+								repeat 3 times
+									kb's pressKey("escape")
+									delay 0.15
+								end repeat
+								return true
+							end if
+							
+							kb's pressKey("escape")
+							kb's pressKey("escape")
 						end if
 					end if
 				end if
@@ -445,8 +434,8 @@ on decorate(mainScript)
 			logger's errorf("Model not found: {}", modelName)
 			false
 		end switchAgentModel
-
-
+		
+		
 		(*
 			Finds the settings menu item that opens the Model submenu, by label rather
 			than position ("last group's last item" was landing on Effort in practice).
@@ -465,34 +454,69 @@ on decorate(mainScript)
 					end repeat
 				end try
 			end tell
-
+			
 			missing value
 		end _findModelMenuItem
 		
 		
 		(*
-			Effort's cascading list (Low/Medium/High/Extra High/Max) resolves via the same
-			fixed path as the Model list -- both are just whatever submenu is currently
-			attached at that slot. Checks the first item's label to tell them apart.
+			Effort/Context/Thinking (whichever quick toggles the current model exposes)
+			all cascade via the same fixed path as the Model list -- they're each just
+			whatever submenu is currently attached at that slot, and there can be more
+			than one wrong target (Sonnet alone has Thinking, Context, and Effort besides
+			Model). Rather than naming every wrong list, use size: those toggle lists are
+			a handful of items (Effort has 5), while the real Model list had 15+ live.
 		*)
-		on _looksLikeEffortList(candidateMenu)
-			set effortWords to {"low", "medium", "high", "extra high", "max"}
+		on _looksLikeModelList(candidateMenu)
 			tell application "System Events" to tell process "Cursor"
 				try
-					set firstItemName to name of (menu item 1 of group 1 of candidateMenu)
+					set totalItems to 0
+					repeat with nextGroup in groups of candidateMenu
+						set totalItems to totalItems + (count of menu items of nextGroup)
+					end repeat
+					return totalItems > 8
 				on error
 					return false
 				end try
 			end tell
+		end _looksLikeModelList
+		
+		
+		(*
+			An instant jump-to-target mouse move doesn't reliably trigger this custom
+			menu's own hover/mouseenter handling. Sliding in helps -- but landing just
+			above first (tried initially) lands ON the item directly above (Effort, for
+			models with Thinking/Context/Effort ahead of Model), hovering that first and
+			firing exactly the wrong-list bug this is meant to avoid. Approaching
+			horizontally instead -- landing to the side at the SAME row, then sliding onto
+			the center -- never crosses a different item's row.
+		*)
+		on _hoverModelMenuItem(theItem)
+			tell application "System Events" to tell process "Cursor"
+				try
+					set {itemX, itemY} to position of theItem
+					set {itemW, itemH} to size of theItem
+				on error
+					return
+				end try
+			end tell
 			
-			set lowerFirstItem to textUtil's lowerCase(textUtil's trim(firstItemName))
-			repeat with nextWord in effortWords
-				if lowerFirstItem is (nextWord as text) then return true
-			end repeat
-			false
-		end _looksLikeEffortList
-
-
+			set targetX to itemX + (itemW div 2)
+			set targetY to itemY + (itemH div 2)
+			set sideX to itemX - 20
+			if sideX < 0 then set sideX to itemX + 5
+			
+			set cliclickCli to cliclickLib's CLICLICK_CLI
+			set sideCommand to cliclickCli & " m:" & sideX & "," & targetY
+			set targetCommand to cliclickCli & " m:" & targetX & "," & targetY
+			try
+				do shell script sideCommand
+				delay 0.15
+				do shell script targetCommand
+			end try
+		end _hoverModelMenuItem
+		
+		
 		on _getModelTrigger()
 			set agentPanel to getAgentPanel()
 			if agentPanel is missing value then return missing value
