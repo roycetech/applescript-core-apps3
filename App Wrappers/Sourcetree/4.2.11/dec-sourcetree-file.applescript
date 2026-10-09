@@ -12,6 +12,7 @@
 	@Last Modified: Fri, Sep 18, 2026 at 08:22:00 AM
 	
 	@Change Logs:
+		Sat, Sep 26, 2026, at 07:36:00 AM - Fixed unstaged label ref; reliable file row selection
 		Fri, Sep 18, 2026, at 08:27:00 AM - Moved file spot cases from sourcetree.applescript
 *)
 use loggerFactory : script "core/logger-factory"
@@ -41,7 +42,7 @@ on spotCheck()
 		INFO:
 		Manual: Trigger Menu Files View
 		Manual: Trigger Files View Sub menu (Single Column)
-		Manual: Select first unstage file
+		Manual: Select first unstaged file
 		Manual: Select first file
 		
 		Manual: Select next file
@@ -237,6 +238,32 @@ on decorate(mainScript)
 		end _getFileRowsUI
 		
 		
+		on _selectFileRow(targetRow)
+			if targetRow is missing value then return
+			
+			set rowSelected to false
+			tell application "System Events" to tell process "Sourcetree"
+				try
+					set selected of targetRow to true
+				end try
+				try
+					set rowSelected to selected of targetRow
+				end try
+				if not rowSelected then
+					try
+						click static text 1 of UI element 1 of targetRow
+						set rowSelected to selected of targetRow
+					end try
+				end if
+			end tell
+			
+			if not rowSelected then
+				logger's debug("Using cliclick")
+				leftClick of cliclick at targetRow
+			end if
+		end _selectFileRow
+		
+		
 		on _getLastStagedFileRow()
 			if running of application "Sourcetree" is false then return missing value
 			
@@ -287,12 +314,12 @@ on decorate(mainScript)
 				repeat with nextRow in targetRows
 					try
 						if not unstagedLabelFound then
-							if value of static text 1 of UI element 1 of nextRow is equal to my LABEL_UNSTAGED_FILES then
+							if value of static text 1 of UI element 1 of nextRow as text is equal to TopLevel's LABEL_UNSTAGED_FILES then
 								set unstagedLabelFound to true
 							end if
 							
 						else
-							set selected of nextRow to true
+							my _selectFileRow(nextRow)
 							exit repeat
 						end if
 					end try
@@ -310,7 +337,7 @@ on decorate(mainScript)
 					set targetRows to rows of my _filesTable()
 				end try
 				
-				set selected of item (fileIndex + 1) of targetRows to true
+				my _selectFileRow(item (fileIndex + 1) of targetRows)
 			end tell
 		end selectFile
 		
@@ -323,7 +350,7 @@ on decorate(mainScript)
 					set targetRows to rows of my _filesTable()
 				end try
 				
-				set selected of second item of targetRows to true
+				my _selectFileRow(second item of targetRows)
 			end tell
 		end selectFirstFile
 		
@@ -337,7 +364,7 @@ on decorate(mainScript)
 					set targetRows to rows of my _filesTable()
 				end try
 				
-				set selected of last item of targetRows to true
+				my _selectFileRow(last item of targetRows)
 			end tell
 		end selectLastFile
 		
@@ -366,7 +393,7 @@ on decorate(mainScript)
 							
 						else
 							log "Selecting first row after the selected row"
-							set selected of nextRow to true
+							my _selectFileRow(nextRow)
 							exit repeat
 						end if
 					end try
@@ -401,7 +428,7 @@ on decorate(mainScript)
 					set previousIsNotALabel to not (exists static text 1 of UI element 1 of item selectedIndex of targetRows)
 					if previousIsNotALabel then
 						log "selecting previous..."
-						set selected of item selectedIndex of targetRows to true
+						my _selectFileRow(item selectedIndex of targetRows)
 					end if
 				end try
 			end tell
