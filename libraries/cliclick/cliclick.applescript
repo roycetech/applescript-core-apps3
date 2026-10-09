@@ -26,6 +26,7 @@
 		./scripts/build-lib.sh libraries/cliclick/cliclick
 
 	@Change Log:
+		Fri, Oct 9, 2026 - Renamed lclick/leftClick/doubleLeftClick offsets from relativex/relativey to fromLeft/fromTop.
 		Thu, Oct 23, 2025, at 11:57:33 AM - Added #rightClick()
 		September 20, 2023 11:46 AM - Removed smoothing for movePointer because having it, the pointer doesn't move to the given coordinates.
 		Last tested on macOS Monterey, fixed the movePointer now working.
@@ -352,7 +353,7 @@ on new()
 		*)
 		-- on lclick at theUi with reset and smoothing
 		-- on lclick at theUi with reset:false and smoothing:true
-		on lclick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, relativex:relativexArg : 0, relativey:relativeyArg : 0
+		on lclick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, fromLeft:fromLeftArg : 0, fromTop:fromTopArg : 0
 			
 			-- WARNING: if we don't log these parameters, compile error :tableflip:.
 			-- Seems  it's no longer a problem February 19, 2021
@@ -371,12 +372,12 @@ on new()
 					set {xSize, ySize} to size
 				end tell
 				
-				set theYPos to yPosition + relativeyArg + (ySize div 2)
+				set theYPos to yPosition + fromTopArg + (ySize div 2)
 				if theYPos is less than 0 then
 					set theYPos to "=" & theYPos
 				end if
-				set negativeX to relativexArg is less than 0
-				set cliParamX to std's ternary(negativeX, xPosition + xSize + relativexArg, xPosition + relativexArg + (xSize div 2))
+				set negativeX to fromLeftArg is less than 0
+				set cliParamX to std's ternary(negativeX, xPosition + xSize + fromLeftArg, xPosition + fromLeftArg + (xSize div 2))
 				-- logger's debugf("xPosition: {}", xPosition)
 				-- logger's debugf("xSize: {}", xSize)
 				-- logger's debugf("cliParamX: {}", cliParamX)
@@ -389,15 +390,15 @@ on new()
 		end lclick
 		
 		
-		on leftClick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, relativex:relativexArg : 0, relativey:relativeyArg : 0
-			lclick at theUi given reset:resetArg, smoothing:smoothingArg, relativex:relativexArg, relativey:relativeyArg
+		on leftClick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, fromLeft:fromLeftArg : 0, fromTop:fromTopArg : 0
+			lclick at theUi given reset:resetArg, smoothing:smoothingArg, fromLeft:fromLeftArg, fromTop:fromTopArg
 		end leftClick
 		
 		 
 		(*
 			Copied from lclick at.
 		*)
-		on doubleLeftClick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, relativex:relativexArg : 0, relativey:relativeyArg : 0
+		on doubleLeftClick at theUi given reset:resetArg : true, smoothing:smoothingArg : true, fromLeft:fromLeftArg : 0, fromTop:fromTopArg : 0
 			if theUi is missing value then return
 			
 			saveCurrentPosition()
@@ -411,12 +412,12 @@ on new()
 					set {xSize, ySize} to size
 				end tell
 				
-				set theYPos to yPosition + relativeyArg + (ySize div 2)
+				set theYPos to yPosition + fromTopArg + (ySize div 2)
 				if theYPos is less than 0 then
 					set theYPos to "=" & theYPos
 				end if
-				set negativeX to relativexArg is less than 0
-				set cliParamX to std's ternary(negativeX, xPosition + xSize + relativexArg, xPosition + relativexArg + (xSize div 2))
+				set negativeX to fromLeftArg is less than 0
+				set cliParamX to std's ternary(negativeX, xPosition + xSize + fromLeftArg, xPosition + fromLeftArg + (xSize div 2))
 				set clickCommand to CLICLICK_CLI & " " & smoothingParam & "dc:" & cliParamX & "," & theYPos
 				do shell script clickCommand
 			end tell
