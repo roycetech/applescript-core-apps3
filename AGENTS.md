@@ -60,7 +60,7 @@ Handler names may use a leading underscore for private helpers (for example `_fi
 
 - **`App Wrappers/<App>/<version>/`**: app-specific libraries (`*.applescript`), often split into `dec-*` decorators composed from the main `new()` handler.
 - **Build**: `@Build` comments point at `./scripts/build-lib.sh 'App Wrappers/...'`.
-- **Spot tests**: many scripts define `spotCheck()` when run from Script Editor, Script Debugger, or `osascript`.
+- **Spot tests**: many scripts define `spotCheck()` when run from Script Editor, Script Debugger, or `osascript`. In the `splitAndTrimParagraphs(...)` cases string, put a blank line after every 5 cases (blank lines are dropped when parsed, so this doesn't shift case numbers) — keeps a long case list human-readable at a glance.
 - **Scratch**: `scratch.applescript` is for local experiments; do not treat it as production API.
 
 ## Change discipline
