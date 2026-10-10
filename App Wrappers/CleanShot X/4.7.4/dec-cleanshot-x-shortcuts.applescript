@@ -93,7 +93,7 @@ on decorate(mainScript)
 				set frontmost to true
 				delay 0.1
 				button "   Type shortcut�" of UI element 2 of row 2 of table 1 of scroll area 1 of window 1
-				lclick of cliclick at result given relativex:90
+				lclick of cliclick at result given fromLeft:90
 			end tell
 		end clearGeneralAllInOne
 		
@@ -140,7 +140,7 @@ on decorate(mainScript)
 				set frontmost to true
 				delay 0.1
 				button "   Type shortcut�" of UI element 2 of row 9 of table 1 of scroll area 1 of window 1
-				lclick of cliclick at result given relativex:90
+				lclick of cliclick at result given fromLeft:90
 			end tell
 		end clearScreenshotsCaptureFullscreen
 		
