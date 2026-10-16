@@ -12,6 +12,7 @@
 	@Last Modified: July 24, 2023 10:56 AM
 	
 	@Change Logs:
+		Fri, Sep 25, 2026, at 03:40:00 PM - Added #getModel() and #switchModel() to detect/change the active model.
 		Fri, Sep 25, 2026, at 03:20:06 PM - Initial working implementation created by Claude.
 *)
 
@@ -20,6 +21,8 @@ use loggerFactory : script "core/logger-factory"
 use decoratorLib : script "core/decorator"
 
 use cliclickLib : script "core/cliclick"
+
+use textUtil : script "core/string"
 
 property logger : missing value
 
@@ -36,7 +39,8 @@ on spotCheck()
 		NOOP
 		Manual: Sidebar - Show
 		Manual: Sidebar - Hide
-		Manual: Focus Prompt
+		Manual: Focus Prompt		
+		Manual: Switch Model
 	")
 	
 	set spotScript to script "core/spot-test"
@@ -58,7 +62,9 @@ on spotCheck()
 	end tell
 	*)
 	logger's infof("HTML Content found: {}", htmlContent is not missing value)
+	logger's infof("Current model: {}", sut's getModel()) -- Slow, takes about 5s.
 	logger's infof("Has sidebar: {}", sut's hasSidebar())
+	logger's infof("Integration: Claude Project Path: {}", sut's getCurrentProjectPath())
 	
 	if caseIndex is 1 then
 		
@@ -70,6 +76,15 @@ on spotCheck()
 		
 	else if caseIndex is 4 then
 		sut's focusPromptInput()
+		
+	else if caseIndex is 5 then
+		
+		set sutModelName to "Opus 5.5"
+		set sutModelName to "Sonnet 5"
+		-- set sutModelName to "Haiku 4.5"
+		logger's debugf("sutModelName: {}", sutModelName)
+		
+		sut's switchModel(sutModelName) 
 		
 	else
 		
@@ -268,6 +283,200 @@ on new()
 				end try
 			end tell
 		end hideSidebar
+		
+		
+		(*
+			@returns the model name currently selected in the message compose
+			toolbar (e.g. "Sonnet 5"), or missing value when it can't be
+			determined.
+		*)
+		on getModel()
+			set modelTrigger to _getModelTrigger()
+			if modelTrigger is missing value then return missing value
+			
+			tell application "System Events" to tell process "Claude"
+				try
+					set triggerDesc to description of modelTrigger
+				on error
+					return missing value
+				end try
+			end tell
+			
+			textUtil's trim(textUtil's stringAfter(triggerDesc, "Model:"))
+		end getModel
+		
+		
+		(*
+			Switches the active model to the one matching @modelName (e.g.
+			"Sonnet 5", "Opus 5.5", "Haiku 4.5"). Exact match (case/whitespace
+			insensitive) is preferred, otherwise the first model whose name
+			starts with @modelName is picked - this tolerates names like
+			"Fable 5.1" for the menu item labeled "Fable 5.1 Requires usage
+			credits".
+
+			@returns true if the model is now active (including when it was
+				already active), false when it could not be found/switched.
+
+			NOTE: The model picker's dropdown is a native AXMenu, but it only
+			renders when triggered by a real synthetic mouse click (cliclick).
+			The plain `click`/`AXPress` action and the `AXShowMenu`
+			accessibility action do NOT open it - they are silently ignored.
+			Once open, its AXMenuItems are only reliably discoverable via
+			`entire contents of mainContent` - direct/attribute-based
+			AXChildren queries on the button or its ancestors keep reporting
+			stale (pre-click) data.
+			
+			Human Review: Very slow at 8s.
+		*)
+		on switchModel(modelName)
+			if running of application "Claude" is false then return false
+			
+			set targetName to my _normalizeModelName(modelName)
+			
+			set currentModel to getModel()
+			if currentModel is not missing value and my _normalizeModelName(currentModel) is targetName then
+				logger's debugf("Already using model: {}", modelName)
+				return true
+			end if
+			
+			set modelTrigger to _getModelTrigger()
+			if modelTrigger is missing value then return false
+			
+			set mainContent to _getMainContent()
+			if mainContent is missing value then return false
+			
+			tell application "Claude" to activate
+			delay 0.2
+			tell application "System Events" to tell process "Claude"
+				set frontmost to true
+				try
+					key code 53 -- close any stray/leftover menu first
+				end try
+			end tell
+			delay 0.2
+			
+			leftClick of cliclick at modelTrigger
+			
+			set targetItem to missing value
+			repeat 20 times
+				set targetItem to my _findMenuItem(mainContent, targetName)
+				if targetItem is not missing value then exit repeat
+				delay 0.1
+			end repeat
+			
+			if targetItem is missing value then
+				tell application "System Events" to tell process "Claude"
+					try
+						key code 53
+					end try
+				end tell
+				logger's errorf("Model not found: {}", modelName)
+				return false
+			end if
+			
+			leftClick of cliclick at targetItem
+			true
+		end switchModel
+		
+		
+		(* @returns the model pop up button (description "Model: <name>"), or missing value. *)
+		on _getModelTrigger()
+			set mainContent to _getMainContent()
+			if mainContent is missing value then return missing value
+			
+			_findElementByDescriptionPrefix(mainContent, "Model:")
+		end _getModelTrigger
+		
+		
+		(* Trims and lowercases, for case/whitespace insensitive comparisons. *)
+		on _normalizeModelName(modelName)
+			textUtil's lowerCase(textUtil's trim(modelName as text))
+		end _normalizeModelName
+		
+		
+		(*
+			Searches @root's entire descendant tree for an AXMenuItem whose
+			(normalized) name equals @normalizedTargetName, falling back to
+			the first one that starts with it. @root is expected to already
+			have its model dropdown open.
+		*)
+		on _findMenuItem(root, normalizedTargetName)
+			tell application "System Events" to tell process "Claude"
+				set allElements to {}
+				try
+					set allElements to entire contents of root
+				end try
+			end tell
+			
+			set prefixMatch to missing value
+			repeat with nextElement in allElements
+				tell application "System Events" to tell process "Claude"
+					set elementRole to "?"
+					try
+						set elementRole to role of nextElement
+					end try
+				end tell
+				if elementRole is "AXMenuItem" then
+					tell application "System Events" to tell process "Claude"
+						set itemName to my _normalizeModelName(name of nextElement)
+					end tell
+					if itemName is normalizedTargetName then return contents of nextElement
+					if prefixMatch is missing value and itemName starts with normalizedTargetName then set prefixMatch to contents of nextElement
+				end if
+			end repeat
+			
+			prefixMatch
+		end _findMenuItem
+		
+		
+		(*
+			@returns the "main" landmark region (skips the sidebar), or
+			missing value. Shared by the model handlers above.
+		*)
+		on _getMainContent()
+			set htmlContent to getHtmlContent()
+			if htmlContent is missing value then return missing value
+			
+			tell application "System Events" to tell process "Claude"
+				try
+					set kids1 to value of attribute "AXChildren" of htmlContent
+					set g1 to contents of item 1 of kids1
+					set kids2 to value of attribute "AXChildren" of g1
+					set g2 to contents of item 1 of kids2
+					set kids3 to value of attribute "AXChildren" of g2
+					set g3 to contents of item 1 of kids3
+					set kids4 to value of attribute "AXChildren" of g3
+					set frameRoot to contents of item 1 of kids4
+				on error
+					return missing value
+				end try
+			end tell
+			
+			_findChildWithRole(frameRoot, "main")
+		end _getMainContent
+		
+		
+		(* @returns the first descendant (depth-first) whose accessibility description starts with @targetPrefix, or missing value. *)
+		on _findElementByDescriptionPrefix(uielement, targetPrefix)
+			tell application "System Events" to tell process "Claude"
+				try
+					if (description of uielement) starts with targetPrefix then return uielement
+				end try
+				
+				try
+					set kids to value of attribute "AXChildren" of uielement
+				on error
+					return missing value
+				end try
+			end tell
+			
+			repeat with nextKid in kids
+				set found to my _findElementByDescriptionPrefix(contents of nextKid, targetPrefix)
+				if found is not missing value then return found
+			end repeat
+			
+			missing value
+		end _findElementByDescriptionPrefix
 		
 		
 		(*
