@@ -48,16 +48,20 @@ on spotCheck()
 	set listUtil to script "core/list"
 	set cases to listUtil's splitAndTrimParagraphs("
 		Main
-	       Manual: Show agent panel
+	    Manual: Show agent panel
        	Manual: Hide agent panel
-        	Manual: Focus on agent panel (Broken on multi agent)
+        Manual: Focus on agent panel (Broken on multi agent)
 		Manual: Switch Agent Mode
 
-		Manual: Switch Agent Model		
+		Manual: Switch Agent Model - Composer
+		Manual: Switch Agent Model - Grok
 		Debug: Find Agent Static Text
 		Debug: Find Terminal Text Field
 		Debug: Find Agent Button
+
 		Dev: Find HTML Content
+		Manual: Switch Agent Effort - Extra High
+		Manual: Switch Agent Effort - High
 	")
 	
 	set spotScript to script "core/spot-test"
@@ -81,6 +85,7 @@ on spotCheck()
 	logger's debugf("HTML Content found: {}", sut's getHtmlContent() is not missing value)
 	logger's infof("Current agent mode: {}", sut's getAgentMode())
 	logger's infof("Current agent model: {}", sut's getAgentModel())
+	logger's infof("Current agent effort: {}", sut's getAgentEffort())
 	
 	if caseIndex is 1 then
 		
@@ -96,7 +101,7 @@ on spotCheck()
 	else if caseIndex is 5 then
 		set sutAgentMode to "Ask"
 		set sutAgentMode to "Plan"
-		-- set sutAgentMode to "Agent"
+		set sutAgentMode to "Agent"
 		logger's debugf("sutAgentMode: {}", sutAgentMode)
 		
 		sut's switchAgentMode(sutAgentMode)
@@ -105,25 +110,32 @@ on spotCheck()
 		(*
 			TODO: Fails when Right Sub-Sidebar is present.
 		*)
-		set sutAgentModel to "Claude Sonnet 5"
 		set sutAgentModel to "Composer 2.5"
-		set sutAgentModel to "Grok 4.6"
 		logger's debugf("sutAgentModel: {}", sutAgentModel)
 		
 		sut's switchAgentModel(sutAgentModel)
 		
 	else if caseIndex is 7 then
-		return sut's _findPlanStaticText(sut's getHtmlContent())
+		(*
+			TODO: Fails when Right Sub-Sidebar is present.
+		*)
+		set sutAgentModel to "Grok 4.6"
+		logger's debugf("sutAgentModel: {}", sutAgentModel)
+		
+		sut's switchAgentModel(sutAgentModel)
 		
 	else if caseIndex is 8 then
-		return sut's _findTextField(sut's getHtmlContent())
+		return sut's _findPlanStaticText(sut's getHtmlContent())
 		
 	else if caseIndex is 9 then
+		return sut's _findTextField(sut's getHtmlContent())
+		
+	else if caseIndex is 10 then
 		set uiutilLib to script "core/ui-util"
 		set uiUtil to uiutilLib's new()
 		uiUtil's findAllButtons(sut's getHtmlContent(), "Cursor", "Agent")
 		
-	else if caseIndex is 10 then
+	else if caseIndex is 11 then
 		-- Use below to dynamically compute when implementatino breaks.
 		set uiutilLib to script "core/ui-util"
 		set uiUtil to uiutilLib's new()
@@ -134,6 +146,18 @@ on spotCheck()
 		if handlerResult then
 			logger's info("Check repliest for the path")
 		end if
+		
+	else if caseIndex is 12 then
+		set sutAgentEffort to "Extra High"
+		logger's debugf("sutAgentEffort: {}", sutAgentEffort)
+		
+		sut's switchAgentEffort(sutAgentEffort)
+		
+	else if caseIndex is 13 then
+		set sutAgentEffort to "High"
+		logger's debugf("sutAgentEffort: {}", sutAgentEffort)
+		
+		sut's switchAgentEffort(sutAgentEffort)
 	end if
 	
 	spot's finish()
@@ -330,7 +354,7 @@ on decorate(mainScript)
 				if modelTrigger is missing value then
 					logger's debug("switchAgentModel: model trigger not found, retrying")
 				else
-					leftClick of cliclick at modelTrigger given relativex:10
+					leftClick of cliclick at modelTrigger given fromLeft:10
 					
 					-- The page container index shifts while a popup is open.
 					set settingsMenu to missing value
@@ -515,6 +539,144 @@ on decorate(mainScript)
 				do shell script targetCommand
 			end try
 		end _hoverModelMenuItem
+		
+		
+		(*
+			@returns the effort label as shown embedded in the model trigger's name,
+				e.g. "Medium" out of "Grok 4.6 Medium Fast". "Fast" is a separate speed
+				toggle that can trail the effort word on the same label -- it's stripped
+				first so the effort suffix check below lines up against the new end.
+				The trigger's name can carry a zero-width space (same issue
+				_normalizeModelName works around) that makes "ends with" silently miss
+				every suffix, so that's stripped here too before any comparison.
+		*)
+		on getAgentEffort()
+			set modelLabel to getAgentModel()
+			if modelLabel is missing value then return missing value
+			
+			set trimmedLabel to textUtil's replace(modelLabel as text, character id 8203, "")
+			set trimmedLabel to textUtil's trim(trimmedLabel)
+			set lowerLabel to textUtil's lowerCase(trimmedLabel)
+			
+			if lowerLabel ends with " fast" then
+				set trimmedLabel to textUtil's trim(text 1 thru ((length of trimmedLabel) - 5) of trimmedLabel)
+				set lowerLabel to textUtil's lowerCase(trimmedLabel)
+			end if
+			
+			set effortSuffixes to {" extra high", " medium", " high", " low", " max"}
+			repeat with nextSuffix in effortSuffixes
+				set suffixText to nextSuffix as text
+				if lowerLabel ends with suffixText then
+					return textUtil's trim(text ((length of trimmedLabel) - (length of suffixText) + 1) thru (length of trimmedLabel) of trimmedLabel)
+				end if
+			end repeat
+			
+			missing value
+		end getAgentEffort
+		
+		
+		(*
+			@effortName - e.g. "High", "Extra High". Switches the effort quick toggle
+				exposed alongside Model in the settings menu (only some models expose it).
+		*)
+		on switchAgentEffort(effortName)
+			if running of application "Cursor" is false then return false
+			
+			set htmlContent to getHtmlContent()
+			if htmlContent is missing value then return false
+			
+			if not isAgentPanelPresent() then showAgentPanel()
+			
+			set currentEffort to getAgentEffort()
+			if currentEffort is not missing value and textUtil's lowerCase(currentEffort) is textUtil's lowerCase(effortName) then
+				logger's debugf("Already using effort: {}", effortName)
+				return true
+			end if
+			
+			tell application "System Events" to tell process "Cursor"
+				set frontmost to true
+			end tell
+			delay 0.15
+			
+			(*
+				Same dynamic-name staleness as switchAgentModel: modelTrigger's name IS
+				the current model, so it's fetched fresh on every attempt.
+			*)
+			repeat 3 times
+				set modelTrigger to _getModelTrigger()
+				if modelTrigger is missing value then
+					logger's debug("switchAgentEffort: model trigger not found, retrying")
+				else
+					leftClick of cliclick at modelTrigger given fromLeft:10
+					
+					-- The page container index shifts while a popup is open.
+					set settingsMenu to missing value
+					repeat 20 times
+						try
+							tell application "System Events" to tell process "Cursor"
+								set settingsMenu to menu 1 of group 1 of group 1 of group 3 of last group of group 1 of htmlContent
+								exit repeat
+							end tell
+						end try
+						delay 0.1
+					end repeat
+					
+					if settingsMenu is missing value then
+						logger's debug("switchAgentEffort: settings menu did not open, retrying")
+					else
+						set effortMenuItem to my _findEffortMenuItem(settingsMenu)
+						if effortMenuItem is missing value then
+							logger's debug("switchAgentEffort: Effort menu item not found, retrying")
+							kb's pressKey("escape")
+						else
+							-- Reuse: hover mechanics here are generic (position/size based), not model-specific.
+							my _hoverModelMenuItem(effortMenuItem)
+							delay 0.3
+							
+							kb's typeText(effortName)
+							delay 0.2
+							kb's pressKey("return")
+							delay 0.3
+							
+							kb's pressKey("escape")
+							kb's pressKey("escape")
+							delay 1
+							
+							set currentEffort to getAgentEffort()
+							if currentEffort is not missing value and textUtil's lowerCase(currentEffort) is textUtil's lowerCase(effortName) then
+								return true
+							end if
+						end if
+					end if
+				end if
+			end repeat
+			
+			logger's errorf("Effort not found: {}", effortName)
+			false
+		end switchAgentEffort
+		
+		
+		(*
+			Finds the settings menu item that opens the Effort submenu, by label
+			(same approach as _findModelMenuItem).
+		*)
+		on _findEffortMenuItem(settingsMenu)
+			tell application "System Events" to tell process "Cursor"
+				try
+					repeat with nextGroup in groups of settingsMenu
+						repeat with nextItem in menu items of nextGroup
+							set itemName to ""
+							try
+								set itemName to name of nextItem
+							end try
+							if itemName starts with "Effort " or itemName is "Effort" then return contents of nextItem
+						end repeat
+					end repeat
+				end try
+			end tell
+			
+			missing value
+		end _findEffortMenuItem
 		
 		
 		on _getModelTrigger()
