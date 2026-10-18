@@ -69,6 +69,8 @@ Handler names may use a leading underscore for private helpers (for example `_fi
 - Keep diffs **minimal**; do not refactor unrelated wrappers.
 - Do not create git commits unless the user asks.
 - **`@Change Logs` entries are for the file's real history, not your scratchpad.** While iterating live against a running app (trying a fix, testing it, finding it wrong, trying again), do not add a change log line for every attempt — that's dev-cycle noise, not a change worth recording, and it bloats every future read of the file (more tokens per query, for entries that were never even verified). Add **one entry** once a fix is actually verified working, describing the final state, not the trail of attempts it took to get there. If you're unsure whether something is verified yet, don't log it yet.
+- **AI-generated features** must say so in the change log. Put `AI` after the date, at the start of the description:  
+  `Fri, Oct 16, 2026, at 10:03:00 AM - AI Added #newSessionInFolder() to click the sidebar "+" next to a project folder.`
 
 ## Commits and PRs
 
