@@ -759,11 +759,25 @@ on decorate(mainScript)
 			set htmlContent to getHtmlContent()
 			if htmlContent is missing value then return missing value
 			
+			-- Fast: known group paths from the HTML content, the layout shifts with the window/sidebar state.
+			set knownPaths to {Â
+				{1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 3, 4, 1, 1, 1, 1, 1, 1}, Â
+				{1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 2, 3, 1, 1, 1, 1, 1, 1}}
+			repeat with nextPath in knownPaths
+				set candidateInput to my _groupAtPath(htmlContent, nextPath)
+				if candidateInput is not missing value then return candidateInput
+			end repeat
+			
+			-- Slow (~15s): find the placeholder by its text and use its parent group.
 			tell application "System Events" to tell process "Cursor"
 				try
-					set candidateInput to group 1 of group 1 of group 1 of group 1 of group 1 of group 1 of group 4 of group 3 of group 2 of group 1 of group 2 of group 1 of group 1 of group 1 of group 1 of group 1 of group 3 of group 2 of group 1 of group 2 of group 2 of group 1 of group 1 of group 3 of group 1 of htmlContent
-					set inputSize to size of candidateInput
-					if (item 1 of inputSize) > 50 then return candidateInput
+					repeat with nextElement in (entire contents of htmlContent)
+						try
+							if role of nextElement is "AXStaticText" and name of nextElement starts with "Plan, Build" then
+								return value of attribute "AXParent" of nextElement
+							end if
+						end try
+					end repeat
 				end try
 			end tell
 			
@@ -779,6 +793,22 @@ on decorate(mainScript)
 			
 			missing value
 		end getPromptUI
+		
+		
+		on _groupAtPath(rootElement, groupIndexes)
+			tell application "System Events" to tell process "Cursor"
+				try
+					set currentElement to rootElement
+					repeat with nextIndex in groupIndexes
+						set currentElement to group (contents of nextIndex) of currentElement
+					end repeat
+					set elementSize to size of currentElement
+					if (item 1 of elementSize) > 50 then return currentElement
+				end try
+			end tell
+			
+			missing value
+		end _groupAtPath
 		
 		
 		on getHtmlContent()
