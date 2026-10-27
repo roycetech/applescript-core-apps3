@@ -12,7 +12,7 @@
 	@Last Modified: Sat, Sep 12, 2026 at 04:06:55 PM
 	
 	@Change Logs:
-		Tue, Oct 27, 2026, at 10:00:00 AM - AI Cursor 3.27: also look in the "Cursor Agents" window; prompt is now a group instead of a text area; getPromptUI falls back to a direct path from the HTML content so isAgentPanelPresent works again
+		Tue, Oct 27, 2026, at 10:00:00 AM - AI Cursor 3.27: also look in the "Cursor Agents" window; prompt input is now a text area inside an editor grid; getPromptUI falls back to a direct path from the HTML content so isAgentPanelPresent works again
 		Sun, Sep 27, 2026, at 09:35:00 AM - Fix Model submenu reveal: find the Model item by label instead of position, hover it (clicking toggles a different quick setting) via a horizontal slide-in so the pointer never crosses the row above (which opened Effort/Context/Thinking instead), verify the revealed list by size before typing into it, and refetch dynamic-name references (model trigger, Model item) fresh each retry instead of reusing a stale one
 		Sat, Sep 26, 2026, at 07:05:00 PM - Update getAgentPanel/getComposerRoot paths for Cursor 3.22 layout
 		Fri, Sep 25, 2026, at 01:40:00 PM - Switch agent model via model picker (settings menu > Model submenu)
@@ -759,22 +759,22 @@ on decorate(mainScript)
 			set htmlContent to getHtmlContent()
 			if htmlContent is missing value then return missing value
 			
-			-- Fast: known group paths from the HTML content, the layout shifts with the window/sidebar state.
-			set knownPaths to {Â
-				{1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 3, 4, 1, 1, 1, 1, 1, 1}, Â
-				{1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 2, 3, 1, 1, 1, 1, 1, 1}}
+			-- Fast: known group paths from the HTML content to the editor grid, the layout shifts with the window/sidebar state.
+			set knownPaths to {}
+			set end of knownPaths to {1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 3, 4, 1, 1, 1, 1, 1}
+			set end of knownPaths to {1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 2, 3, 1, 1, 1, 1, 1}
 			repeat with nextPath in knownPaths
-				set candidateInput to my _groupAtPath(htmlContent, nextPath)
-				if candidateInput is not missing value then return candidateInput
+				set editorGrid to my _groupAtPath(htmlContent, nextPath)
+				if editorGrid is not missing value then return my _getEditorInput(editorGrid)
 			end repeat
 			
-			-- Slow (~15s): find the placeholder by its text and use its parent group.
+			-- Slow (~15s): find the placeholder by its text and use the editor input next to it.
 			tell application "System Events" to tell process "Cursor"
 				try
 					repeat with nextElement in (entire contents of htmlContent)
 						try
 							if role of nextElement is "AXStaticText" and name of nextElement starts with "Plan, Build" then
-								return value of attribute "AXParent" of nextElement
+								return my _getEditorInput(value of attribute "AXParent" of nextElement)
 							end if
 						end try
 					end repeat
@@ -793,6 +793,17 @@ on decorate(mainScript)
 			
 			missing value
 		end getPromptUI
+		
+		
+		on _getEditorInput(editorGrid)
+			tell application "System Events" to tell process "Cursor"
+				try
+					return text area 1 of editorGrid
+				end try
+			end tell
+			
+			missing value
+		end _getEditorInput
 		
 		
 		on _groupAtPath(rootElement, groupIndexes)
