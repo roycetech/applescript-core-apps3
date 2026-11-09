@@ -12,6 +12,7 @@
 	@Last Modified: July 24, 2023 10:56 AM
 	
 	@Change Logs:
+		Fri, Oct 16, 2026, at 10:03:00 AM - Added #newSessionInFolder() to click the sidebar "+" next to a project folder.
 		Fri, Sep 25, 2026, at 03:40:00 PM - Added #getModel() and #switchModel() to detect/change the active model.
 		Fri, Sep 25, 2026, at 03:20:06 PM - Initial working implementation created by Claude.
 *)
@@ -41,6 +42,8 @@ on spotCheck()
 		Manual: Sidebar - Hide
 		Manual: Focus Prompt		
 		Manual: Switch Model
+
+		Manual: New Session in Folder
 	")
 	
 	set spotScript to script "core/spot-test"
@@ -84,7 +87,13 @@ on spotCheck()
 		-- set sutModelName to "Haiku 4.5"
 		logger's debugf("sutModelName: {}", sutModelName)
 		
-		sut's switchModel(sutModelName) 
+		sut's switchModel(sutModelName)
+		
+	else if caseIndex is 6 then
+		set sutFolderName to "newplexuss"
+		logger's debugf("sutFolderName: {}", sutFolderName)
+		
+		logger's infof("New session triggered: {}", sut's newSessionInFolder(sutFolderName))
 		
 	else
 		
@@ -283,6 +292,98 @@ on new()
 				end try
 			end tell
 		end hideSidebar
+		
+		
+		(*
+			Clicks the "+" next to a sidebar project folder to start a new
+			session in that folder. The button's accessibility description is
+			"New session in <folderName>".
+
+			Matching is case- and whitespace-insensitive, so "new plexuss"
+			matches the folder labeled "newplexuss". If there is no exact
+			match, a unique prefix match is used.
+
+			@returns true if the plus was found and clicked, false otherwise.
+		*)
+		on newSessionInFolder(folderName)
+			if running of application "Claude" is false then return false
+			
+			showSidebar()
+			
+			set plusButton to _findNewSessionButton(folderName)
+			if plusButton is missing value then
+				logger's errorf("New session button not found for folder: {}", folderName)
+				return false
+			end if
+			
+			tell application "Claude" to activate
+			tell application "System Events" to tell process "Claude"
+				set frontmost to true
+			end tell
+			
+			leftClick of cliclick at plusButton
+			true
+		end newSessionInFolder
+		
+		
+		(* @returns the sidebar "+" button for @folderName, or missing value. *)
+		on _findNewSessionButton(folderName)
+			set sidebarUI to getSidebarUI()
+			if sidebarUI is missing value then return missing value
+			
+			set targetName to my _normalizeFolderName(folderName)
+			if targetName is "" then return missing value
+			
+			script MatchState
+				property exactMatch : missing value
+				property prefixMatch : missing value
+				property prefixMatchCount : 0
+			end script
+			
+			my _scanNewSessionButtons(sidebarUI, targetName, MatchState)
+			
+			if MatchState's exactMatch is not missing value then return MatchState's exactMatch
+			if MatchState's prefixMatchCount is 1 then return MatchState's prefixMatch
+			
+			missing value
+		end _findNewSessionButton
+		
+		
+		on _scanNewSessionButtons(uielement, targetName, MatchState)
+			tell application "System Events" to tell process "Claude"
+				try
+					set elementDesc to description of uielement
+				on error
+					set elementDesc to missing value
+				end try
+				
+				try
+					set kids to value of attribute "AXChildren" of uielement
+				on error
+					set kids to {}
+				end try
+			end tell
+			
+			if elementDesc is not missing value and elementDesc starts with "New session in " then
+				set folderPart to my _normalizeFolderName(textUtil's stringAfter(elementDesc, "New session in "))
+				if folderPart is targetName then
+					set exactMatch of MatchState to uielement
+				else if folderPart starts with targetName then
+					set prefixMatch of MatchState to uielement
+					set prefixMatchCount of MatchState to (prefixMatchCount of MatchState) + 1
+				end if
+			end if
+			
+			repeat with nextKid in kids
+				my _scanNewSessionButtons(contents of nextKid, targetName, MatchState)
+			end repeat
+		end _scanNewSessionButtons
+		
+		
+		(* Trims, lowercases, and strips spaces so "new plexuss" matches "newplexuss". *)
+		on _normalizeFolderName(folderName)
+			textUtil's replace(textUtil's lowerCase(textUtil's trim(folderName as text)), " ", "")
+		end _normalizeFolderName
 		
 		
 		(*
