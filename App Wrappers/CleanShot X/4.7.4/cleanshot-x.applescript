@@ -28,6 +28,7 @@ use decCleanShotXGeneral : script "core/dec-cleanshot-x-general"
 use decCleanShotXShortcuts : script "core/dec-cleanshot-x-shortcuts"
 use decCleanShotXQuickAccess : script "core/dec-cleanshot-x-quick-access"
 use decCleanShotXAdvanced : script "core/dec-cleanshot-x-advanced"
+use decCleanShotXAnnotate : script "core/dec-cleanshot-x-annotate"
 
 property logger : missing value
 
@@ -272,7 +273,7 @@ on new()
 		
 		on setCaptureWindowShadowOff()
 			if not isCaptureWindowShadow() then return
-			
+
 			toggleCaptureWindowShadow()
 		end setCaptureWindowShadowOff
 	end script
@@ -281,4 +282,5 @@ on new()
 	decCleanShotXShortcuts's decorate(result)
 	decCleanShotXQuickAccess's decorate(result)
 	decCleanShotXAdvanced's decorate(result)
+	decCleanShotXAnnotate's decorate(result)
 end new
