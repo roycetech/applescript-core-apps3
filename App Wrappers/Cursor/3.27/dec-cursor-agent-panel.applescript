@@ -2,6 +2,11 @@
 	@Purpose:
 		Handler's for manipulating the agent panel.
 
+	@See:
+		ui-structure-notes.md (same folder) -- captured live AX tree structure,
+		known-broken paths, and the recipe for re-deriving MODE_TOOLBAR_PATH when
+		Cursor's layout shifts again.
+
 	@Project:
 		applescript-core-apps3
 
@@ -12,6 +17,11 @@
 	@Last Modified: Sat, Sep 12, 2026 at 04:06:55 PM
 	
 	@Change Logs:
+		Sat, Nov 07, 2026, at 10:00:00 AM - AI Fixed isAgentProcessing(): while processing, the composer row loses its voice-chat child instead of showing a "Stop" button, so it now returns true when the composer row resolves but the action button is missing (COMPOSER_ROW_PATH + COMPOSER_ACTION_BUTTON_PATH).
+		Fri, Nov 06, 2026, at 10:30:00 AM - AI Added isAgentPanelNarrow() and widenAgentPanelIfNarrow() (drags the panel's left edge until the mode label is visible again); getAgentMode() widens a narrow panel first. Added narrowAgentPanel() (shrinks the panel to the minimum width that isAgentPanelNarrow() still reports false).
+		Wed, Nov 04, 2026, at 01:15:00 PM - AI Added isAgentProcessing() (fixed-path read of the composer action button, COMPOSER_ACTION_BUTTON_PATH), getAgentTabTitle(), getAgentTabCount() and closeFrontAgentTab().
+		Tue, Nov 03, 2026, at 02:15:00 PM - AI Fixed MODE_TOOLBAR_PATH (broke getAgentMode()/switchAgentMode()): replaced with MODE_TOOLBAR_PATH_CANDIDATES, since positions 18-19 flip based on single vs. multiple agent tabs rather than drifting. Updated ui-structure-notes.md.
+		Thu, Oct 29, 2026, at 11:00:00 AM - AI Fixed getAgentMode()/switchAgentMode() for the 3.27 layout (mode is now plain text; toolbar located via hardcoded MODE_TOOLBAR_PATH for speed, needs re-deriving when the layout shifts; returns missing value when the panel is too narrow). Added switchAgentModeByKeyboard(), cycling modes with Cmd+. (~2-3s vs ~5s).
 		Tue, Oct 27, 2026, at 10:00:00 AM - AI Cursor 3.27: also look in the "Cursor Agents" window; prompt input is now a text area inside an editor grid; getPromptUI falls back to a direct path from the HTML content so isAgentPanelPresent works again
 		Sun, Sep 27, 2026, at 09:35:00 AM - Fix Model submenu reveal: find the Model item by label instead of position, hover it (clicking toggles a different quick setting) via a horizontal slide-in so the pointer never crosses the row above (which opened Effort/Context/Thinking instead), verify the revealed list by size before typing into it, and refetch dynamic-name references (model trigger, Model item) fresh each retry instead of reusing a stale one
 		Sat, Sep 26, 2026, at 07:05:00 PM - Update getAgentPanel/getComposerRoot paths for Cursor 3.22 layout
@@ -32,14 +42,6 @@ property logger : missing value
 property kb : missing value
 property cliclick : missing value
 
-property TopLevel : me
-
-property ID_MULTITASK : "60055"
-property ID_ASK : "60821"
-property ID_AGENT : "60814"
-property ID_PLAN : "60880"
-property ID_DEBUG : "60079"
-
 if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
 on spotCheck()
@@ -49,9 +51,9 @@ on spotCheck()
 	set listUtil to script "core/list"
 	set cases to listUtil's splitAndTrimParagraphs("
 		Main
-	    	Manual: Show agent panel
+	    	Manual: Show agent panel 
        	Manual: Hide agent panel
-        	Manual: Focus on agent panel (Broken on multi agent)
+		Manual: Focus on agent panel (Broken on multi agent)
 		Manual: Switch Agent Mode
 
 		Manual: Switch Agent Model - Composer
@@ -63,6 +65,10 @@ on spotCheck()
 		Dev: Find HTML Content
 		Manual: Switch Agent Effort - Extra High
 		Manual: Switch Agent Effort - High
+		Manual: Close Front Agent Tab
+		Manual: Widen Agent Panel If Narrow
+		
+		Manual: Narrow Agent Panel To Minimum
 	")
 	
 	set spotScript to script "core/spot-test"
@@ -80,15 +86,18 @@ on spotCheck()
 	set sut to decorate(sut)
 	
 	tell application "System Events" to tell process "Cursor"
-	set frontmost to true
-end tell
+		-- set frontmost to true
+	end tell
 	
+	logger's infof("Is agent processing: {}", sut's isAgentProcessing())
 	logger's infof("Is agent panel present: {}", sut's isAgentPanelPresent())
 	logger's infof("Is agent prompt input focused: {}", sut's isAgentPanelFocused())
 	logger's infof("Has lingering prompt: {}", sut's hasLingeringPrompt())
+	logger's infof("Agent tab title: {}", sut's getAgentTabTitle())
+	logger's infof("Agent tab count: {}", sut's getAgentTabCount())
 	logger's debugf("UI prompt present: {}", sut's getPromptUI() is not missing value)
 	logger's debugf("HTML Content found: {}", sut's getHtmlContent() is not missing value)
-	logger's infof("Current agent mode: {}", sut's getAgentMode())
+	logger's infof("Current agent mode(wide-panel only): {}", sut's getAgentMode())
 	logger's infof("Current agent model: {}", sut's getAgentModel())
 	logger's infof("Current agent effort: {}", sut's getAgentEffort())
 	
@@ -104,12 +113,16 @@ end tell
 		sut's focusOnAgentPanel()
 		
 	else if caseIndex is 5 then
+		logger's debug(1)
 		set sutAgentMode to "Ask"
-		set sutAgentMode to "Plan"
+		-- set sutAgentMode to "Plan"
 		set sutAgentMode to "Agent"
 		logger's debugf("sutAgentMode: {}", sutAgentMode)
 		
+		
+		
 		sut's switchAgentMode(sutAgentMode)
+		-- logger's debug(2)
 		
 	else if caseIndex is 6 then
 		(*
@@ -163,7 +176,21 @@ end tell
 		logger's debugf("sutAgentEffort: {}", sutAgentEffort)
 		
 		sut's switchAgentEffort(sutAgentEffort)
+		
+	else if caseIndex is 14 then
+		logger's infof("Closed: {}", sut's closeFrontAgentTab())
+		
+	else if caseIndex is 15 then
+		logger's infof("Is agent panel narrow: {}", sut's isAgentPanelNarrow())
+		logger's infof("Widened: {}", sut's widenAgentPanelIfNarrow())
+		logger's infof("Is agent panel narrow now: {}", sut's isAgentPanelNarrow())
+		
+	else if caseIndex is 16 then
+		logger's infof("Narrowed: {}", sut's narrowAgentPanel())
+		logger's infof("Is agent panel narrow now: {}", sut's isAgentPanelNarrow())
 	end if
+	
+	activate
 	
 	spot's finish()
 	logger's finish()
@@ -179,35 +206,137 @@ on decorate(mainScript)
 	script CursorAgentPanelDecorator
 		property parent : mainScript
 		
-		on getAgentMode()
-			set agentPanel to getAgentPanel()
-			if agentPanel is missing value then return missing value
-			set composerRoot to getComposerRoot(agentPanel)
-			if composerRoot is missing value then return missing value
+		(*
+			Hardcoded for speed, not resilience: live group-index paths (from
+			getHtmlContent() down to the composer toolbar row) for THIS Cursor
+			3.27 build, captured by walking up from the model picker pop up button.
+			The mode indicator is item 1 of this row's sibling groups.
+
+			Confirmed live 2026-11-03: positions 18-19 flip between {2, 3} (many
+			agent tabs open) and {3, 4} (a single agent tab) -- not drift, a
+			genuine layout difference based on tab count -- so both are carried
+			as candidates, tried in order, rather than picking one. Will still
+			need a new candidate added if Cursor's layout shifts again.
+		*)
+		property MODE_TOOLBAR_PATH_CANDIDATES : {{1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 2, 3, 1, 1, 2, 1}, {1, 3, 1, 1, 2, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2, 1, 2, 3, 4, 1, 1, 2, 1}}
+		
+		on _getModeTriggerGroup()
+			set htmlContent to getHtmlContent()
+			if htmlContent is missing value then return missing value
 			
+			repeat with candidatePath in MODE_TOOLBAR_PATH_CANDIDATES
+				set found to my _resolveModeToolbarPath(htmlContent, contents of candidatePath)
+				if found is not missing value then return found
+			end repeat
+			
+			missing value
+		end _getModeTriggerGroup
+		
+		
+		(* @returns the element reached by walking indexPath as "group N of ... of rootElement", then its first sibling UI element, or missing value. *)
+		on _resolveModeToolbarPath(rootElement, indexPath)
 			tell application "System Events" to tell process "Cursor"
 				try
-					set modeTrigger to group 1 of group 1 of group 1 of group 2 of group 1 of group 1 of composerRoot
-					set iconId to id of (value of static text 1 of group 1 of modeTrigger as text) as text
+					set currentElement to rootElement
+					repeat with nextIndex in indexPath
+						set currentElement to group (contents of nextIndex) of currentElement
+					end repeat
+					return item 1 of (UI elements of currentElement)
+				on error
+					return missing value
+				end try
+			end tell
+		end _resolveModeToolbarPath
+		
+		
+		(*
+			@returns the current mode ("agent", "ask", "plan", "multitask", "debug")
+				read from the toolbar's visible mode label. A narrow panel hides that
+				label (the icon alone carries no accessible id/description/tooltip), so
+				the panel is widened first; missing value if it still can't be read.
+				switchAgentMode() and switchAgentModeByKeyboard() read the mode through
+				this, so they get the widening too.
+		*)
+		on getAgentMode()
+			widenAgentPanelIfNarrow()
+			set modeTriggerGroup to my _getModeTriggerGroup()
+			if modeTriggerGroup is missing value then return missing value
+			
+			set knownModes to {"agent", "ask", "plan", "multitask", "debug"}
+			tell application "System Events" to tell process "Cursor"
+				try
+					set modeGroupElements to entire contents of modeTriggerGroup
+					repeat with nextStaticText in modeGroupElements
+						if class of nextStaticText is static text then
+							set textValue to textUtil's lowerCase(value of nextStaticText as text)
+							if knownModes contains textValue then return textValue
+						end if
+					end repeat
 				on error the errorMessage number the errorNumber
 					logger's debugf("getAgentMode: {}", errorMessage)
 					return missing value
 				end try
 			end tell
 			
-			if iconId is TopLevel's ID_AGENT then return "agent"
-			if iconId is TopLevel's ID_ASK then return "ask"
-			if iconId is TopLevel's ID_MULTITASK then return "multitask"
-			if iconId is TopLevel's ID_PLAN then return "plan"
-			if iconId is TopLevel's ID_DEBUG then return "debug"
-			
-			logger's debugf("getAgentMode: unknown icon id {}", iconId)
 			missing value
 		end getAgentMode
 		
 		
+		(*
+			Alternative to switchAgentMode(): cycles modes with the Cmd+. shortcut
+			and reads getAgentMode() back after each press, instead of clicking the
+			dropdown and typing the mode name into its filter. Kept as a separate
+			option rather than replacing switchAgentMode() -- untested against the
+			dropdown approach's edge cases (narrow panel in particular: Cmd+. still
+			cycles blind there, since getAgentMode() can't read back the result
+			either way, so this just presses once and trusts it, same tradeoff as
+			switchAgentMode()'s own narrow-panel fallback).
+
+			Caps at one full cycle (5 presses, one per known mode) so a stuck/
+			unreadable mode can't spin forever.
+		*)
 		on switchAgentModeByKeyboard(agentMode)
-			switchAgentMode(agentMode)
+			if running of application "Cursor" is false then return false
+			
+			set htmlContent to getHtmlContent()
+			if htmlContent is missing value then return false
+			
+			set promptUI to getPromptUI()
+			if promptUI is missing value then
+				showAgentPanel()
+				set promptUI to getPromptUI()
+			end if
+			
+			set currentMode to getAgentMode()
+			if currentMode is not missing value and currentMode is agentMode then
+				logger's debugf("Already in mode: {}", agentMode)
+				return true
+			end if
+			
+			tell application "System Events" to tell process "Cursor"
+				set frontmost to true
+			end tell
+			delay 0.15
+			
+			set knownModeCount to 5 -- agent, ask, plan, multitask, debug
+			repeat knownModeCount times
+				kb's pressCommandKey(".")
+				delay 0.3
+				
+				set currentMode to getAgentMode()
+				if currentMode is not missing value then
+					if currentMode is agentMode then return true
+				else
+					-- Can't read the mode back (narrow panel) -- same limitation as
+					-- switchAgentMode(), so trust this one press rather than blindly
+					-- cycling further with no way to tell if we've already landed on it.
+					logger's debug("switchAgentModeByKeyboard: can't verify mode in narrow panel, trusting the press")
+					return true
+				end if
+			end repeat
+			
+			logger's errorf("Mode not found via Cmd+. cycling: {}", agentMode)
+			false
 		end switchAgentModeByKeyboard
 		
 		
@@ -217,7 +346,17 @@ on decorate(mainScript)
 			set htmlContent to getHtmlContent()
 			if htmlContent is missing value then return false
 			
-			if not isAgentPanelPresent() then showAgentPanel()
+			(*
+				getPromptUI() resolved once and reused below (for the presence check AND
+				originalPromptValue) instead of calling it twice -- it's not cheap (~2s,
+				it walks several fallback paths), and isAgentPanelPresent() + a separate
+				getPromptUI() call used to each pay that cost independently.
+			*)
+			set promptUI to getPromptUI()
+			if promptUI is missing value then
+				showAgentPanel()
+				set promptUI to getPromptUI()
+			end if
 			
 			set currentMode to getAgentMode()
 			if currentMode is not missing value and currentMode is agentMode then
@@ -227,10 +366,8 @@ on decorate(mainScript)
 			
 			set modeLabel to my _modeMenuLabel(agentMode)
 			
-			set agentPanel to getAgentPanel()
-			if agentPanel is missing value then return false
-			set composerRoot to getComposerRoot(agentPanel)
-			if composerRoot is missing value then return false
+			set modeTrigger to my _getModeTriggerGroup()
+			if modeTrigger is missing value then return false
 			
 			(*
 				The mode dropdown's rows aren't exposed to the accessibility tree at all
@@ -239,7 +376,6 @@ on decorate(mainScript)
 				on screen. So instead of finding and clicking a row, type the mode name into
 				the dropdown's type-ahead filter and confirm with Return.
 			*)
-			set promptUI to getPromptUI()
 			set originalPromptValue to ""
 			if promptUI is not missing value then
 				tell application "System Events" to tell process "Cursor"
@@ -251,7 +387,6 @@ on decorate(mainScript)
 			
 			tell application "System Events" to tell process "Cursor"
 				set frontmost to true
-				set modeTrigger to group 1 of group 1 of group 1 of group 2 of group 1 of group 1 of composerRoot
 			end tell
 			delay 0.15
 			
@@ -287,9 +422,17 @@ on decorate(mainScript)
 					delay 0.3
 					
 					set currentMode to getAgentMode()
-					if currentMode is not missing value and currentMode is agentMode then return true
-					
-					kb's pressKey("escape")
+					if currentMode is not missing value then
+						if currentMode is agentMode then return true
+						kb's pressKey("escape")
+					else
+						-- Agent panel is too narrow to read the mode label back (icon-only,
+						-- no accessible text/id/tooltip to confirm against). The keystrokes
+						-- went into the dropdown's filter, not the prompt, so trust the switch
+						-- rather than retrying blindly and reporting a false failure.
+						logger's debug("switchAgentMode: can't verify mode in narrow panel, trusting the switch")
+						return true
+					end if
 				end if
 			end repeat
 			
@@ -740,7 +883,7 @@ on decorate(mainScript)
 		end isAgentPanelPresent
 		
 		
-		(*
+		(* 
 			@returns a text area.
 		*)
 		on getPromptUI()
@@ -857,6 +1000,159 @@ on decorate(mainScript)
 				end try
 			end tell
 		end hideAgentPanel
+		
+		
+		(*
+			Drags from the panel's drag handle to targetX along the same y. cliclick's
+			plain drag (start and end only, as in core/cliclick's dragFromTo) lands
+			anywhere from 0 to 100% of the distance; intermediate moves with a short wait
+			between events make it exact (measured 6/6 on Cursor 3.27, 2026-11-06).
+		*)
+		on _dragAgentPanelHandle(handleX, handleY, targetX)
+			set cliclickCli to do shell script "plutil -extract \"cliclick CLI\" raw ~/applescript-core/config-system.plist"
+			set dragDistance to targetX - handleX
+			set firstStepX to handleX + (dragDistance div 3)
+			set secondStepX to handleX + ((dragDistance * 2) div 3)
+			
+			cliclick's saveCurrentPosition()
+			set dragCommand to cliclickCli & " -w 15 dd:" & handleX & "," & handleY
+			set dragCommand to dragCommand & " m:" & firstStepX & "," & handleY
+			set dragCommand to dragCommand & " m:" & secondStepX & "," & handleY
+			set dragCommand to dragCommand & " m:" & targetX & "," & handleY
+			set dragCommand to dragCommand & " du:" & targetX & "," & handleY
+			do shell script dragCommand
+			cliclick's restorePosition()
+		end _dragAgentPanelHandle
+		
+		
+		(*
+			Measured live on Cursor 3.27 (2026-11-06): the mode label is still shown at
+			the narrowest width the user found, a 354px panel (301px prompt), and is gone
+			at ~341px. The
+			prompt text area is ~53px narrower than the panel and its left edge sits
+			~28px right of the panel's drag handle, so thresholds are expressed in
+			prompt width. The "wide" target is the default 406px prompt (459px panel).
+		*)
+		property NARROW_PROMPT_WIDTH : 300
+		property WIDE_PROMPT_WIDTH : 406
+		property PROMPT_LEFT_TO_PANEL_EDGE : 28
+		
+		
+		(* @returns true when the agent panel is narrower than the width where Cursor hides the mode label. *)
+		on isAgentPanelNarrow()
+			set promptUI to getPromptUI()
+			if promptUI is missing value then return false
+			
+			tell application "System Events" to tell process "Cursor"
+				try
+					set promptSize to size of promptUI
+					return (item 1 of promptSize) < NARROW_PROMPT_WIDTH
+				end try
+			end tell
+			
+			false
+		end isAgentPanelNarrow
+		
+		
+		(*
+			Drags the agent panel's left edge leftwards until it is no longer narrow
+			(Cursor must be frontmost for the drag to register).
+			@returns true if the panel is not narrow afterwards, false if it could not be widened.
+		*)
+		on widenAgentPanelIfNarrow()
+			if not isAgentPanelNarrow() then return true
+			
+			tell application "System Events" to tell process "Cursor"
+				set frontmost to true
+			end tell
+			delay 0.3
+			
+			repeat 3 times
+				set promptUI to getPromptUI()
+				if promptUI is missing value then return false
+				
+				tell application "System Events" to tell process "Cursor"
+					set promptPosition to position of promptUI
+					set promptSize to size of promptUI
+					set promptWidth to item 1 of promptSize
+					set windowPosition to position of front window
+					set windowSize to size of front window
+					set windowHeight to item 2 of windowSize
+				end tell
+				if promptWidth is greater than or equal to NARROW_PROMPT_WIDTH then return true
+				
+				set handleX to (item 1 of promptPosition) - PROMPT_LEFT_TO_PANEL_EDGE
+				set handleY to (item 2 of windowPosition) + (windowHeight div 2)
+				set targetX to handleX - (WIDE_PROMPT_WIDTH - promptWidth)
+				
+				my _dragAgentPanelHandle(handleX, handleY, targetX)
+				
+				-- The accessibility tree lags the relayout; wait for the new width before judging the drag, or it gets repeated.
+				repeat 10 times
+					delay 0.3
+					if not isAgentPanelNarrow() then return true
+				end repeat
+			end repeat
+			
+			not isAgentPanelNarrow()
+		end widenAgentPanelIfNarrow
+		
+		
+		(*
+			Drags the agent panel's left edge until the panel is as small as it can get
+			while isAgentPanelNarrow() still returns false (prompt width NARROW_PROMPT_WIDTH
+			up to NARROW_PROMPT_WIDTH + 6). A drag lands a few pixels off its target, so
+			this corrects with further drags, each sized from the width actually read back.
+			@returns true if the panel ended up within that range, false otherwise
+				(including when the panel isn't visible).
+		*)
+		on narrowAgentPanel()
+			set promptUI to getPromptUI()
+			if promptUI is missing value then return false
+			
+			tell application "System Events" to tell process "Cursor"
+				set frontmost to true
+			end tell
+			delay 0.3
+			
+			set targetWidth to NARROW_PROMPT_WIDTH + 2
+			repeat 5 times
+				set promptUI to getPromptUI()
+				if promptUI is missing value then return false
+				
+				tell application "System Events" to tell process "Cursor"
+					set promptPosition to position of promptUI
+					set promptSize to size of promptUI
+					set promptWidth to item 1 of promptSize
+					set windowPosition to position of front window
+					set windowSize to size of front window
+					set windowHeight to item 2 of windowSize
+				end tell
+				if promptWidth is greater than or equal to NARROW_PROMPT_WIDTH and promptWidth is less than or equal to NARROW_PROMPT_WIDTH + 6 then return true
+				
+				set handleX to (item 1 of promptPosition) - PROMPT_LEFT_TO_PANEL_EDGE
+				set handleY to (item 2 of windowPosition) + (windowHeight div 2)
+				set targetX to handleX + (promptWidth - targetWidth)
+				
+				my _dragAgentPanelHandle(handleX, handleY, targetX)
+				
+				-- Wait for the width to settle (same reading twice running, and changed) before measuring again.
+				set lastWidth to promptWidth
+				repeat 10 times
+					delay 0.3
+					set promptUI to getPromptUI()
+					if promptUI is missing value then return false
+					tell application "System Events" to tell process "Cursor"
+						set promptSize to size of promptUI
+					end tell
+					set currentWidth to item 1 of promptSize
+					if currentWidth is lastWidth and currentWidth is not promptWidth then exit repeat
+					set lastWidth to currentWidth
+				end repeat
+			end repeat
+			
+			false
+		end narrowAgentPanel
 		
 		
 		on focusOnAgentPanel()
@@ -991,17 +1287,181 @@ on decorate(mainScript)
 		end hasLingeringPrompt
 		
 		
-		on _findPlanStaticText(uicontainer)
+		(*
+			@returns true while the selected agent tab is processing. The composer row's 6th child
+				holds the "Start voice chat" button when idle; while processing that child is gone
+				(the row has 5 children) and any "Stop" button replaces it, so a resolvable row
+				without the voice button means processing.
+		*)
+		property COMPOSER_ROW_PATH : {1, 1, 1, 1, 2, 1, 2, 3, 4, 1, 1, 2, 1}
+		property COMPOSER_ACTION_BUTTON_PATH : {6, 1, 1}
+		
+		on isAgentProcessing()
+			repeat with nextPanel in _getAgentPanelCandidates()
+				set composerRow to my _getComposerRow(contents of nextPanel)
+				if composerRow is not missing value then
+					set actionDescription to my _getComposerActionDescription(composerRow)
+					if actionDescription is missing value then return true
+					return actionDescription starts with "Stop"
+				end if
+			end repeat
+			
+			false
+		end isAgentProcessing
+		
+		
+		(* @returns the title of the selected agent tab, or missing value. *)
+		on getAgentTabTitle()
+			set tabGroup to _getAgentTabGroup()
+			if tabGroup is missing value then return missing value
+			
 			tell application "System Events" to tell process "Cursor"
 				try
-					repeat with nextStaticText in static texts of uicontainer
+					repeat with nextRadioButton in radio buttons of tabGroup
+						if (value of nextRadioButton) is 1 then return description of group 1 of nextRadioButton
+					end repeat
+				end try
+			end tell
+			
+			missing value
+		end getAgentTabTitle
+		
+		
+		(* @returns the number of agent tabs, or 0 when the tab strip isn't found. *)
+		on getAgentTabCount()
+			set tabGroup to _getAgentTabGroup()
+			if tabGroup is missing value then return 0
+			
+			tell application "System Events" to tell process "Cursor"
+				try
+					return count of radio buttons of tabGroup
+				end try
+			end tell
+			
+			0
+		end getAgentTabCount
+		
+		
+		(*
+			Presses the "Close" button inside the selected agent tab, which is safer than
+			focusing the tab and sending Cmd+W (which may close the wrong thing).
+			@returns true if the close button was pressed.
+		*)
+		on closeFrontAgentTab()
+			set tabGroup to _getAgentTabGroup()
+			if tabGroup is missing value then return false
+			
+			tell application "System Events" to tell process "Cursor"
+				try
+					repeat with nextRadioButton in radio buttons of tabGroup
+						if (value of nextRadioButton) is 1 then
+							perform action "AXPress" of button 1 of toolbar 1 of nextRadioButton
+							return true
+						end if
+					end repeat
+				end try
+			end tell
+			
+			false
+		end closeFrontAgentTab
+		
+		
+		on _getAgentTabGroup()
+			repeat with nextPanel in _getAgentPanelCandidates()
+				set found to my _findTabGroup(contents of nextPanel)
+				if found is not missing value then return found
+			end repeat
+			
+			missing value
+		end _getAgentTabGroup
+		
+		
+		(* Same panel paths as getAgentPanel(), without its composer-chrome check, which fails on some windows. *)
+		on _getAgentPanelCandidates()
+			set htmlContent to getHtmlContent()
+			if htmlContent is missing value then return {}
+			
+			set candidatePanels to {}
+			tell application "System Events" to tell process "Cursor"
+				try
+					set end of candidatePanels to group 1 of group 3 of group 2 of group 1 of group 2 of group 2 of group 1 of group 1 of group 3 of group 1 of htmlContent
+				end try
+				try
+					set end of candidatePanels to group 1 of group 2 of group 2 of group 1 of group 2 of group 2 of group 1 of group 1 of group 3 of group 1 of htmlContent
+				end try
+				try
+					set end of candidatePanels to group 1 of group 3 of group 1 of group 1 of group 2 of group 2 of group 1 of group 1 of group 3 of group 1 of htmlContent
+				end try
+			end tell
+			candidatePanels
+		end _getAgentPanelCandidates
+		
+		
+		on _findTabGroup(uiContainer)
+			tell application "System Events" to tell process "Cursor"
+				try
+					if role of uiContainer is "AXTabGroup" and (description of radio button 1 of uiContainer) contains "Chat Editors" then return uiContainer
+				end try
+				
+				try
+					set childElements to value of attribute "AXChildren" of uiContainer
+				on error
+					return missing value
+				end try
+			end tell
+			
+			repeat with nextElement in childElements
+				set found to my _findTabGroup(contents of nextElement)
+				if found is not missing value then return found
+			end repeat
+			
+			missing value
+		end _findTabGroup
+		
+		
+		(* @returns the composer row (mode, model, effort and action controls) of the agent panel, or missing value. *)
+		on _getComposerRow(agentPanel)
+			tell application "System Events" to tell process "Cursor"
+				try
+					set currentElement to agentPanel
+					repeat with nextIndex in COMPOSER_ROW_PATH
+						set currentElement to UI element (contents of nextIndex) of currentElement
+					end repeat
+					return currentElement
+				end try
+			end tell
+			
+			missing value
+		end _getComposerRow
+		
+		
+		(* @returns the composer action button's description ("Start voice chat" when idle), or missing value when the button is absent. *)
+		on _getComposerActionDescription(composerRow)
+			tell application "System Events" to tell process "Cursor"
+				try
+					set currentElement to composerRow
+					repeat with nextIndex in COMPOSER_ACTION_BUTTON_PATH
+						set currentElement to UI element (contents of nextIndex) of currentElement
+					end repeat
+					return description of currentElement
+				end try
+			end tell
+			
+			missing value
+		end _getComposerActionDescription
+		
+		
+		on _findPlanStaticText(uiContainer)
+			tell application "System Events" to tell process "Cursor"
+				try
+					repeat with nextStaticText in static texts of uiContainer
 						set textValue to value of nextStaticText
 						if textValue is missing value then set textValue to name of nextStaticText
 						if textValue starts with "Plan" then return contents of nextStaticText
 					end repeat
 				end try
 				
-				repeat with nextGroup in groups of uicontainer
+				repeat with nextGroup in groups of uiContainer
 					set found to my _findPlanStaticText(nextGroup)
 					if found is not missing value then return found
 				end repeat
@@ -1011,15 +1471,15 @@ on decorate(mainScript)
 		end _findPlanStaticText
 		
 		
-		on _findTextField(uicontainer)
+		on _findTextField(uiContainer)
 			tell application "System Events" to tell process "Cursor"
 				try
-					repeat with nextTextField in text fields of uicontainer
+					repeat with nextTextField in text fields of uiContainer
 						return nextTextField
 					end repeat
 				end try
 				
-				repeat with nextGroup in groups of uicontainer
+				repeat with nextGroup in groups of uiContainer
 					set found to my _findTextField(nextGroup)
 					if found is not missing value then return found
 				end repeat

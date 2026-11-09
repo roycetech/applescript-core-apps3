@@ -48,9 +48,9 @@ on spotCheck()
 	set listUtil to script "core/list"
 	set cases to listUtil's splitAndTrimParagraphs("
 		Main
-	    Manual: Show agent panel
+	    	Manual: Show agent panel
        	Manual: Hide agent panel
-        Manual: Focus on agent panel (Broken on multi agent)
+        	Manual: Focus on agent panel (Broken on multi agent)
 		Manual: Switch Agent Mode
 
 		Manual: Switch Agent Model - Composer

@@ -48,7 +48,7 @@ Handler names may use a leading underscore for private helpers (for example `_fi
 
 ## AppleScript and UI automation
 
-- **Electron apps** (Cursor, Claude, VS Code, Chrome): prefer **label- or description-based** lookup (`whose`, recursive search under `uiContainer`, or `entire contents`) over long fixed `group N` chains; layout indices change between app versions.
+- **Electron apps** (Cursor, Claude, VS Code, Chrome): prefer **static DOM locations** — a fixed index path from the content root (`getHtmlContent()`), or a short list of candidate paths tried in order when the layout varies (see `*_PATH_CANDIDATES` in the Cursor 3.27 and Claude 4.4212 wrappers) — over recursing the accessibility tree. Recursive search, `entire contents`, and `whose` over the DOM are slow (10-30s per call) and must not be used in handlers that run routinely. Capture the path live, document how to re-derive it in `ui-structure-notes.md`, and add a new candidate when the layout shifts; use a recursive search only as a one-off to derive a path, never as the shipped lookup.
 - **Clicks in web content**: this project often uses `core/cliclick` (`lclick` / `leftClick`) on the UI element reference, not only `click` in System Events.
 - **Cursor**: main web root is commonly  
   `UI element 1 of group 1 of group 1 of group 1 of group 1 of group 1 of group 1 of front window`  
@@ -69,7 +69,7 @@ Handler names may use a leading underscore for private helpers (for example `_fi
 - Keep diffs **minimal**; do not refactor unrelated wrappers.
 - Do not create git commits unless the user asks.
 - **Do not use the `¬` line-continuation character** in AppleScript. Keep each statement on one line, or build the value up in steps (e.g. `set end of someList to ...`).
-- **`@Change Logs` entries are for the file's real history, not your scratchpad.** While iterating live against a running app (trying a fix, testing it, finding it wrong, trying again), do not add a change log line for every attempt — that's dev-cycle noise, not a change worth recording, and it bloats every future read of the file (more tokens per query, for entries that were never even verified). Add **one entry** once a fix is actually verified working, describing the final state, not the trail of attempts it took to get there. If you're unsure whether something is verified yet, don't log it yet.
+- **`@Change Logs` entries are for the file's real history, not your scratchpad.** While iterating live against a running app (trying a fix, testing it, finding it wrong, trying again), do not add a change log line for every attempt — that's dev-cycle noise, not a change worth recording, and it bloats every future read of the file (more tokens per query, for entries that were never even verified). Add **one entry** once a fix is actually verified working, describing the final state, not the trail of attempts it took to get there. If you're unsure whether something is verified yet, don't log it yet. **Consolidate same-day edits:** if the file already has an entry dated today, update that entry (merge the new change into its description and refresh its time) instead of adding another line; add a new entry only when the date changes or the change is unrelated to the existing one.
 - **AI-generated features** must say so in the change log. Put `AI` after the date, at the start of the description:  
   `Fri, Oct 16, 2026, at 10:03:00 AM - AI Added #newSessionInFolder() to click the sidebar "+" next to a project folder.`
 
