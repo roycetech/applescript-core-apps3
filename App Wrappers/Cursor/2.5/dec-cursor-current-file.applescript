@@ -10,6 +10,7 @@
 
 	@Created: Thu, Feb 26, 2026 at 03:53:46 PM
 	@Last Modified: 2026-03-24 17:31:36
+	
 	@Change Logs:
 *)
 use textUtil : script "core/string"
@@ -20,6 +21,9 @@ use fileUtil : script "core/file"
 use loggerFactory : script "core/logger-factory"
 
 property logger : missing value
+
+property TopLevel : me
+property KEYWORD_WORKSPACE : "(Workspace)"
 
 if {"Script Editor", "Script Debugger", "osascript"} contains the name of current application then spotCheck()
 
@@ -46,7 +50,6 @@ on spotCheck()
 	set sut to decorate(sut)
 	
 	logger's infof("Current Project name: {}", sut's getCurrentProjectName())
-	logger's infof("Current Project path: {}", sut's getCurrentProjectPath())
 	logger's infof("Current file path: {}", sut's getCurrentFilePath())
 	logger's infof("Current file directory: {}", sut's getCurrentFileDirectory())
 	logger's infof("Current filename: {}", sut's getCurrentFilename())
@@ -88,40 +91,19 @@ on decorate(mainScript)
 			end tell
 			
 			if windowTitle does not contain unic's SEPARATOR then
+				if windowTitle contains TopLevel's KEYWORD_WORKSPACE then
+					return textUtil's stringBefore(windowTitle, space & TopLevel's KEYWORD_WORKSPACE)
+				end if
 				-- logger's debug("No separator in the title")
 				return windowTitle
 			end if
 			
 			textUtil's split(windowTitle, unic's SEPARATOR)
 			set titleProjectName to item 2 of result
-			if titleProjectName contains "(Workspace)" then return textUtil's stringBefore(titleProjectName, " (Workspace)")
+			if titleProjectName contains TopLevel's KEYWORD_WORKSPACE then return textUtil's stringBefore(titleProjectName, space & TopLevel's KEYWORD_WORKSPACE)
 			
 			titleProjectName
 		end getCurrentProjectName
-		
-		
-		(*
-			Retrofitted from visual-studio-code.
-		*)
-		on getCurrentProjectPath()
-			set projectName to getCurrentProjectName() -- Diverged from vsc in the handler name to get the project name.
-			-- logger's debugf("projectName: {}", projectName)
-			
-			if projectName is missing value then return missing value
-			
-			set currentFilePath to getCurrentFilePath()
-			-- logger's debugf("currentFilePath: {}", currentFilePath)
-			
-			if currentFilePath is missing value then
-				set appHubProjectsLib to script "com.roycetech/app-hub/app-hub-projects"
-				set appHubProjects to appHubProjectsLib's new()
-				if appHubProjects's isRegistered(projectName) then
-					return appHubProjects's new(projectName)'s getProjectPath()
-				end if
-			end if
-			
-			textUtil's stringBefore(getCurrentFilePath(), projectName) & projectName
-		end getCurrentProjectPath
 		
 		
 		on getCurrentFilename()
