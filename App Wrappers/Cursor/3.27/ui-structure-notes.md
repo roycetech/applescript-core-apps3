@@ -140,35 +140,40 @@ identifiable by its accessibility description, which always starts with
 `"Terminal N, <shell>"` (e.g. `"Terminal 1, zsh"`), followed by a fixed block of
 screen-reader help text.
 
-Fixed path from `getHtmlContent()` (fast, no tree walk):
+Fixed path from `getHtmlContent()` (fast, no tree walk), captured 2026-11-11.
+Every level is `UI element N` (outermost first):
 
 ```
-text field 1 of group 1 of group 3 of group 2 of group 1 of group 1 of group 1
-of group 1 of group 1 of group 1 of group 1 of group 1 of group 1 of group 1 of
-group 1 of group 1 of group 1 of group 2 of group 2 of group 1 of group 1 of
-group 2 of group 1 of group 1 of group 2 of group 1 of group 1 of group 1 of
-group 1 of group 1 of <getHtmlContent()>
+TERMINAL_PATH_CANDIDATES = {{1, 3, 1, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 3, 1, 1}}
 ```
 
-`_findTerminalTextField()` tries this first and falls back to a full-tree scan
-(`entire contents of <getHtmlContent()>`, filtered to the text field whose
-description contains `"Terminal"`) only if it fails. The fallback alone is
-correct but slow — it fetches a property per element across the whole content
-root (hundreds of accessibility round-trips), measured at ~1s under light load
-and 15s+ under heavier load on this machine. The fixed path is one compound
-specifier and avoids that entirely.
+`_findTerminalTextField()` tries each candidate (checking the description
+contains `"Terminal"`) and falls back to a full-tree scan (`entire contents`,
+10s+) only if none resolve. Resolves in well under a second; verified twice,
+3s apart.
 
-**Known-unstable (why there's a fallback at all):** unlike `getPromptUI()`'s
-anchors, this chain was NOT reproducible across live discovery attempts even
-seconds apart in the same Cursor window with nothing deliberately changed —
-re-deriving it twice in a row sometimes produced two different index sequences,
-and resolving a just-captured chain in a fresh process sometimes failed
-immediately. Only the outermost 2 levels under `getHtmlContent()` were
-consistently stable across attempts; something in the next few levels down
-(most likely which other panels/sidebars are open, not the terminal's own
-scrollback content) shifts the group nesting. Treat the fixed path above as a
-best-effort snapshot, not a guarantee — that's the whole reason the fallback
-exists, and why it's worth keeping even after the fixed path is re-derived.
+**Why the old chain was unstable:** it used `group N`, which counts only
+groups, so any non-group sibling appearing or disappearing shifted the index.
+`UI element N` counts all children and is stable. Always use `UI element N`.
+
+### Terminal tabs (multiple terminals)
+
+With 2+ terminals, the panel shows an `AXList` described `"Terminal tabs"`; its
+children are the tabs (`"Terminal 1 zsh"`, ...). Fixed path from
+`getHtmlContent()` (`UI element N`, captured 2026-11-11):
+
+```
+TERMINAL_TAB_LIST_PATH = {1, 3, 1, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1}
+```
+
+With a single terminal the list isn't rendered (count = 1). Split panes are
+separate entries (`"Terminal 3 zsh, split 2 of 2"`) but share one tab group, so
+clicking either shows the group's active pane. The text field (see above) is
+always the active terminal's, and still resolves with several terminals. The
+toolbar "+" button creates a *split*, so `newTerminal()` uses Ctrl+Shift+`.
+The tab close button and toolbar "Kill Terminal" aren't exposed with several
+terminals (no AX element even on hover), so `closeTerminal()` switches to the tab
+and runs "Terminal: Kill the Active Terminal Instance" from the command palette.
 
 ### Recipe: re-deriving the fixed path when it breaks
 
@@ -183,7 +188,7 @@ exists, and why it's worth keeping even after the fixed path is re-derived.
    same" element don't compare equal, only their `AXPosition` values do).
 4. Build the compound specifier outermost-first, using each level's own
    `class` (`group`, `text field`, or the literal `UI element` for whichever
-   level isn't a plain group — don't assume they're all `group`).
+   level isn't a plain group). Resolve with `UI element N` at every level.
 5. Verify immediately, in the same script, by resolving that exact compound
    specifier and checking its `description` contains `"Terminal"`. Do this at
    least twice, a few seconds apart, before trusting it — per the instability
