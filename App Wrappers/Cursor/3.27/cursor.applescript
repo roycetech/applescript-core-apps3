@@ -13,6 +13,7 @@
 	@Last Modified: 2026-03-31 18:35:40
 
 	@Change Logs:
+		Sat, Nov 14, 2026, at 10:00:00 AM - AI Composed the new agent panel tab decorator.
 		Fri, Nov 06, 2026, at 01:00:00 PM - AI Cloned from 3.18; added #ensureIdeWindow() to switch to the IDE window when the Agents window is frontmost; composed the side bar decorator.
 		Sun, Sep 13, 2026, at 02:31:05 PM - Added terminal decorator
 		Tue, Sep 08, 2026, at 09:18:02 AM - Added status bar decorator.
@@ -161,6 +162,7 @@ on new()
 	set decCursorHighLevel to script "core/dec-cursor-high-level"
 	set decCursorStatusBar to script "core/dec-cursor-status-bar"
 	set decCursorAgentPanel to script "core/dec-cursor-agent-panel"
+	set decCursorAgentPanelTab to script "core/dec-cursor-agent-panel-tab"
 	set decCursorTerminal to script "core/dec-cursor-terminal"
 	set decCursorSideBar to script "core/dec-cursor-side-bar"
 	 
@@ -462,6 +464,7 @@ on new()
 	decCursorHighLevel's decorate(result)
 	decCursorStatusBar's decorate(result)
 	decCursorAgentPanel's decorate(result)
+	decCursorAgentPanelTab's decorate(result)
 	decCursorTerminal's decorate(result)
 	decCursorSideBar's decorate(result)
 	

@@ -17,6 +17,7 @@
 	@Last Modified: Sat, Sep 12, 2026 at 04:06:55 PM
 	
 	@Change Logs:
+		Sat, Nov 14, 2026, at 10:00:00 AM - AI Moved the agent tab handlers (getAgentTabTitle(), getAgentTabCount(), closeFrontAgentTab()) to dec-cursor-agent-panel-tab.applescript.
 		Sat, Nov 07, 2026, at 10:00:00 AM - AI Fixed isAgentProcessing(): while processing, the composer row loses its voice-chat child instead of showing a "Stop" button, so it now returns true when the composer row resolves but the action button is missing (COMPOSER_ROW_PATH + COMPOSER_ACTION_BUTTON_PATH).
 		Fri, Nov 06, 2026, at 10:30:00 AM - AI Added isAgentPanelNarrow() and widenAgentPanelIfNarrow() (drags the panel's left edge until the mode label is visible again); getAgentMode() widens a narrow panel first. Added narrowAgentPanel() (shrinks the panel to the minimum width that isAgentPanelNarrow() still reports false).
 		Wed, Nov 04, 2026, at 01:15:00 PM - AI Added isAgentProcessing() (fixed-path read of the composer action button, COMPOSER_ACTION_BUTTON_PATH), getAgentTabTitle(), getAgentTabCount() and closeFrontAgentTab().
@@ -65,7 +66,6 @@ on spotCheck()
 		Dev: Find HTML Content
 		Manual: Switch Agent Effort - Extra High
 		Manual: Switch Agent Effort - High
-		Manual: Close Front Agent Tab
 		Manual: Widen Agent Panel If Narrow
 		
 		Manual: Narrow Agent Panel To Minimum
@@ -93,8 +93,6 @@ on spotCheck()
 	logger's infof("Is agent panel present: {}", sut's isAgentPanelPresent())
 	logger's infof("Is agent prompt input focused: {}", sut's isAgentPanelFocused())
 	logger's infof("Has lingering prompt: {}", sut's hasLingeringPrompt())
-	logger's infof("Agent tab title: {}", sut's getAgentTabTitle())
-	logger's infof("Agent tab count: {}", sut's getAgentTabCount())
 	logger's debugf("UI prompt present: {}", sut's getPromptUI() is not missing value)
 	logger's debugf("HTML Content found: {}", sut's getHtmlContent() is not missing value)
 	logger's infof("Current agent mode(wide-panel only): {}", sut's getAgentMode())
@@ -178,14 +176,11 @@ on spotCheck()
 		sut's switchAgentEffort(sutAgentEffort)
 		
 	else if caseIndex is 14 then
-		logger's infof("Closed: {}", sut's closeFrontAgentTab())
-		
-	else if caseIndex is 15 then
 		logger's infof("Is agent panel narrow: {}", sut's isAgentPanelNarrow())
 		logger's infof("Widened: {}", sut's widenAgentPanelIfNarrow())
 		logger's infof("Is agent panel narrow now: {}", sut's isAgentPanelNarrow())
 		
-	else if caseIndex is 16 then
+	else if caseIndex is 15 then
 		logger's infof("Narrowed: {}", sut's narrowAgentPanel())
 		logger's infof("Is agent panel narrow now: {}", sut's isAgentPanelNarrow())
 	end if
@@ -1310,72 +1305,6 @@ on decorate(mainScript)
 		end isAgentProcessing
 		
 		
-		(* @returns the title of the selected agent tab, or missing value. *)
-		on getAgentTabTitle()
-			set tabGroup to _getAgentTabGroup()
-			if tabGroup is missing value then return missing value
-			
-			tell application "System Events" to tell process "Cursor"
-				try
-					repeat with nextRadioButton in radio buttons of tabGroup
-						if (value of nextRadioButton) is 1 then return description of group 1 of nextRadioButton
-					end repeat
-				end try
-			end tell
-			
-			missing value
-		end getAgentTabTitle
-		
-		
-		(* @returns the number of agent tabs, or 0 when the tab strip isn't found. *)
-		on getAgentTabCount()
-			set tabGroup to _getAgentTabGroup()
-			if tabGroup is missing value then return 0
-			
-			tell application "System Events" to tell process "Cursor"
-				try
-					return count of radio buttons of tabGroup
-				end try
-			end tell
-			
-			0
-		end getAgentTabCount
-		
-		
-		(*
-			Presses the "Close" button inside the selected agent tab, which is safer than
-			focusing the tab and sending Cmd+W (which may close the wrong thing).
-			@returns true if the close button was pressed.
-		*)
-		on closeFrontAgentTab()
-			set tabGroup to _getAgentTabGroup()
-			if tabGroup is missing value then return false
-			
-			tell application "System Events" to tell process "Cursor"
-				try
-					repeat with nextRadioButton in radio buttons of tabGroup
-						if (value of nextRadioButton) is 1 then
-							perform action "AXPress" of button 1 of toolbar 1 of nextRadioButton
-							return true
-						end if
-					end repeat
-				end try
-			end tell
-			
-			false
-		end closeFrontAgentTab
-		
-		
-		on _getAgentTabGroup()
-			repeat with nextPanel in _getAgentPanelCandidates()
-				set found to my _findTabGroup(contents of nextPanel)
-				if found is not missing value then return found
-			end repeat
-			
-			missing value
-		end _getAgentTabGroup
-		
-		
 		(* Same panel paths as getAgentPanel(), without its composer-chrome check, which fails on some windows. *)
 		on _getAgentPanelCandidates()
 			set htmlContent to getHtmlContent()
@@ -1395,28 +1324,6 @@ on decorate(mainScript)
 			end tell
 			candidatePanels
 		end _getAgentPanelCandidates
-		
-		
-		on _findTabGroup(uiContainer)
-			tell application "System Events" to tell process "Cursor"
-				try
-					if role of uiContainer is "AXTabGroup" and (description of radio button 1 of uiContainer) contains "Chat Editors" then return uiContainer
-				end try
-				
-				try
-					set childElements to value of attribute "AXChildren" of uiContainer
-				on error
-					return missing value
-				end try
-			end tell
-			
-			repeat with nextElement in childElements
-				set found to my _findTabGroup(contents of nextElement)
-				if found is not missing value then return found
-			end repeat
-			
-			missing value
-		end _findTabGroup
 		
 		
 		(* @returns the composer row (mode, model, effort and action controls) of the agent panel, or missing value. *)
