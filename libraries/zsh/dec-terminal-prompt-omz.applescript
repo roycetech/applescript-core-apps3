@@ -91,6 +91,7 @@ on spotCheck()
 	set frontTab to decorate(result)
 	
 	-- Check (Git/Non Git, With/out Parens, With/out Lingering Command)
+	logger's infof("Is zsh: {}", frontTab's isZsh())
 	logger's infof("Prompt: [{}]", frontTab's getPrompt())
 	
 	logger's infof("Prompt With Command (if command is present): {}", frontTab's getPromptText())
@@ -99,7 +100,6 @@ on spotCheck()
 	logger's infof("Is Shell Prompt: {}", frontTab's isShellPrompt())
 	
 	logger's infof("Is SSH: {}", frontTab's isSSH())
-	logger's infof("Is zsh: {}", frontTab's isZsh())
 	logger's infof("Is bash: {}", frontTab's isBash())
 	
 	logger's infof("Git directory?: [{}]", frontTab's isGitDirectory())
@@ -488,6 +488,8 @@ on decorate(terminalTabInstance)
 			-- logger's debugf("position: {}", position)
 			
 			set omzArrowPresent to position is not 0
+			-- logger's debugf("omzArrowPresent: {}", omzArrowPresent)
+			
 			if omzArrowPresent then
 				set stringAfterOmzArrow to text position thru -1 of recentBuffer
 				-- logger's debugf("stringAfterOmzArrow: {}", stringAfterOmzArrow)
@@ -522,14 +524,14 @@ on decorate(terminalTabInstance)
 			set currentDirectoryName to getDirectoryName()
 			log currentDirectoryName
 			repeat with nextElement in theList
-				logger's debugf("nextElement: {}", nextElement)
+				-- logger's debugf("nextElement: {}", nextElement)
 				if nextElement contains omz's OMZ_GIT_X then
 					set cleanELement to textUtil's stringAfter(nextElement, omz's OMZ_GIT_X & " ")
 					if cleanELement is missing value then set cleanELement to ""
 				else
 					set cleanELement to the nextElement
 				end if
-				logger's debugf("cleanElement: {}", cleanELement)
+				-- logger's debugf("cleanElement: {}", cleanELement)
 				
 				if cleanELement contains "~" then set cleanELement to text 3 thru -1 of cleanELement
 				set cleanELement to textUtil's replace(cleanELement, currentDirectoryName & " ", "")
@@ -571,7 +573,10 @@ on decorate(terminalTabInstance)
 			
 			if isShellPrompt() is false then
 				-- logger's debug("#getPrompt() Non-shell")
-				set firstLine to first item of textUtil's split(my getPromptText(), linefeed)
+				set promptTextWithCommand to getPromptText()
+				if promptTextWithCommand is missing value then return missing value -- OMZ arrow not in the recent output.
+				
+				set firstLine to first item of textUtil's split(promptTextWithCommand, linefeed)
 				-- logger's debugf("firstLine: {}", firstLine)
 				
 				set directoryName to getDirectoryName()
