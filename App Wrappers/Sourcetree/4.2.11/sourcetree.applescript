@@ -6,6 +6,7 @@
 		./scripts/build-lib.sh 'App Wrappers/Sourcetree/4.2.11/sourcetree'
 
 	@Change Logs:
+		Fri, Nov 20, 2026, at 12:18:00 PM - AI Composed dec-sourcetree-tabs
 		Fri, Sep 18, 2026, at 08:30:00 AM - Refactored commit handlers into dec-sourcetree-commit
 		Fri, Sep 18, 2026, at 08:28:00 AM - spotCheck: single integration INFO case only
 		Fri, Sep 18, 2026, at 08:27:00 AM - Moved file spot cases to dec-sourcetree-file
@@ -75,6 +76,7 @@ on new()
 	loggerFactory's inject(me)
 	set decSourcetreeFile to script "core/dec-sourcetree-file"
 	set decSourcetreeCommit to script "core/dec-sourcetree-commit"
+	set decSourcetreeTabs to script "core/dec-sourcetree-tabs"
 	
 	script SourcetreeInstance
 		
@@ -205,6 +207,7 @@ on new()
 	
 	decSourcetreeFile's decorate(result)
 	decSourcetreeCommit's decorate(result)
+	decSourcetreeTabs's decorate(result)
 	
 	set decorator to decoratorLib's new(result)
 	decorator's decorateByName("SourcetreeInstance")
