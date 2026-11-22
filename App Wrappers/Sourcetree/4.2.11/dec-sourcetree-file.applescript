@@ -12,6 +12,7 @@
 	@Last Modified: Fri, Sep 18, 2026 at 08:22:00 AM
 	
 	@Change Logs:
+		Sat, Nov 21, 2026, at 05:49:00 PM - AI Added #isFileSelected
 		Sat, Sep 26, 2026, at 07:36:00 AM - Fixed unstaged label ref; reliable file row selection
 		Fri, Sep 18, 2026, at 08:27:00 AM - Moved file spot cases from sourcetree.applescript
 *)
@@ -69,6 +70,7 @@ on spotCheck()
 	set sut to decorate(sut)
 	
 	logger's infof("Last staged file selected: {}", sut's isLastStagedFileSelected())
+	logger's infof("File selected: {}", sut's isFileSelected())
 	logger's debugf("Has Last staged file row: {}", sut's _getLastStagedFileRow() is not missing value)
 	
 	if caseIndex is 1 then
@@ -126,6 +128,19 @@ on decorate(mainScript)
 	
 	script SourcetreeFileDecorator
 		property parent : mainScript
+		
+		on isFileSelected()
+			if running of application "Sourcetree" is false then return false
+			
+			tell application "System Events" to tell process "Sourcetree"
+				try
+					return selected of (first row of my _filesTable() whose selected is true)
+				end try
+			end tell
+			
+			false
+		end isFileSelected
+		
 		
 		(*
 			WARNING: Triggers menu pop up.
