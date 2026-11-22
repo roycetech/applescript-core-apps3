@@ -13,6 +13,7 @@
 	@Last Modified: 2026-03-31 18:35:40
 
 	@Change Logs:
+		Sat, Nov 21, 2026, at 10:00:00 AM - AI Composed the new editor decorator (#focusEditor, #isEditorFocused).
 		Sat, Nov 14, 2026, at 10:00:00 AM - AI Composed the new agent panel tab decorator.
 		Fri, Nov 06, 2026, at 01:00:00 PM - AI Cloned from 3.18; added #ensureIdeWindow() to switch to the IDE window when the Agents window is frontmost; composed the side bar decorator.
 		Sun, Sep 13, 2026, at 02:31:05 PM - Added terminal decorator
@@ -165,6 +166,7 @@ on new()
 	set decCursorAgentPanelTab to script "core/dec-cursor-agent-panel-tab"
 	set decCursorTerminal to script "core/dec-cursor-terminal"
 	set decCursorSideBar to script "core/dec-cursor-side-bar"
+	set decCursorEditor to script "core/dec-cursor-editor"
 	 
 	script CursorInstance
 		property parent : appWithFileDialog
@@ -467,6 +469,7 @@ on new()
 	decCursorAgentPanelTab's decorate(result)
 	decCursorTerminal's decorate(result)
 	decCursorSideBar's decorate(result)
+	decCursorEditor's decorate(result)
 	
 	set decorator to decoratorLib's new(result)
 	decorator's decorateByName("CursorInstance")

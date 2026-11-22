@@ -238,3 +238,29 @@ resolved at the same path through its container in a third check.
 3. Resolve depth-first through the candidate indexes, keeping only the combination
    whose leaf has the expected description. Add it as a new candidate rather than
    replacing the old one.
+
+## Editor (`dec-cursor-editor.applescript`)
+
+Captured live against Cursor 3.27 on 2026-11-21; specific to this build and
+layout, expect it to go stale.
+
+The editor is a Monaco `text area` described `"The editor is not accessible at
+this time. To enable screen reader optimized mode..."`. It is a 1x1 element that
+sits at the caret position, so don't `cliclick` it; `set focused of ... to true`
+works (unlike the xterm terminal field). It only exists while a file is open.
+
+Fixed path from `getHtmlContent()` (`UI element N`, outermost first):
+
+```
+EDITOR_PATH_CANDIDATES = {{1, 3, 1, 1, 2, 2, 1, 2, 2, 1, 2, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1}}
+```
+
+It shares its first 11 indexes with the terminal path, then diverges.
+
+### Recipe: re-deriving the path
+
+1. One-off recursive walk of `UI elements` from `getHtmlContent()`, tracking the
+   index path, until `class is text area` and `description starts with "The editor
+   is not accessible"` (about 15s; never ship this).
+2. Resolve the path with `UI element N` at every level and check `class is text area`.
+3. Update `EDITOR_PATH_CANDIDATES` here and in the decorator.
